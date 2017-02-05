@@ -1,11 +1,14 @@
 import os
 from collections import defaultdict
 from collections import deque
+from BitVector import BitVector
+from utils.graph_jaccard_similarity import graph_jaccard_similarity
 
 SOURCE_LABEL = "S"
+NUM_TWEETS = 3
 
 
-def tweet_parser(filename, path="data", hashtags_map=None, debug=False):
+def tweet_parser(filename, path="data", hashtags_map=None, hashtags_bitmask=None, graph_id=None, debug=False):
     tweet_graph = dict()
 
     f = open(os.path.join(path, filename), 'r')
@@ -23,18 +26,19 @@ def tweet_parser(filename, path="data", hashtags_map=None, debug=False):
             print "edge:", edge
 
         if edge[0] not in tweet_graph:
-            tweet_graph[edge[0]] = [edge[1]]
+            tweet_graph[edge[0]] = set(edge[1])
         else:
-            tweet_graph[edge[0]].append(edge[1])
+            tweet_graph[edge[0]].add(edge[1])
 
         if edge[1] not in tweet_graph:
-            tweet_graph[edge[1]] = []
+            tweet_graph[edge[1]] = set()
 
         line = f.readline()
 
     if hashtags_map is not None:
         for h in hashtags:
             hashtags_map[h].append(tweet_graph)
+            hashtags_bitmask[h][graph_id] = 1
 
     if debug:
         queue = deque(tweet_graph[SOURCE_LABEL])
@@ -82,9 +86,11 @@ def graph_file_writer(final_graph, filename="final_graph.tsv", path="data"):
 if __name__ == "__main__":
     hashtags_map = defaultdict(lambda: [])
     graphs_map = {}
+    ht_bitmasks = defaultdict(lambda: BitVector(intVal=0, size=NUM_TWEETS))
 
-    for i in range(4, 7):
-        graph, hashtags = tweet_parser(filename="tweet{}.txt".format(i), hashtags_map=hashtags_map)
+    for i in range(NUM_TWEETS):
+        graph, hashtags = tweet_parser(filename="tweet{}.txt".format(i), hashtags_map=hashtags_map,
+                                       hashtags_bitmask=ht_bitmasks, graph_id=i)
         graphs_map[i] = (graph, hashtags)
 
     # union_graph = join_graphs(graphs_map)
