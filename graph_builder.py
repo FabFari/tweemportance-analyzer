@@ -83,6 +83,16 @@ def graph_file_writer(final_graph, filename="final_graph.tsv", path="data"):
 
     f.close()
 
+
+def bitmask_file_writer(ht_bitmasks, filename="hashtags_bitmasks.tsv", path="data"):
+    f = open(os.path.join(path, filename), 'wt')
+
+    for (ht, bm) in ht_bitmasks.iteritems():
+        f.write("{}\t{}\n".format(ht, str(bm)))
+
+    f.close()
+
+
 if __name__ == "__main__":
     hashtags_map = defaultdict(lambda: [])
     graphs_map = {}
@@ -93,6 +103,7 @@ if __name__ == "__main__":
                                        hashtags_bitmask=ht_bitmasks, graph_id=i)
         graphs_map[i] = (graph, hashtags)
 
+    bitmask_file_writer(ht_bitmasks)
     # union_graph = join_graphs(graphs_map)
 
     nodes_counters = defaultdict(lambda: defaultdict(lambda: 0))
