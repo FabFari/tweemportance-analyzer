@@ -1,8 +1,9 @@
 import os
+import operator
+
 from collections import defaultdict
 from collections import deque
 from BitVector import BitVector
-from utils.graph_jaccard_similarity import graph_jaccard_similarity
 
 SOURCE_LABEL = "S"
 NUM_TWEETS = 3
@@ -84,6 +85,27 @@ def graph_file_writer(final_graph, filename="final_graph.tsv", path="data"):
     f.close()
 
 
+def jaccard_all_pairs_similarity_file_writer(ht_bitmasks, filename="jaccard_all_pairs_similarity.tsv", path="data"):
+    ht_pair_sim = defaultdict(lambda: dict())
+    for (ht1, bm1) in ht_bitmasks.iteritems():
+        for (ht2, bm2) in ht_bitmasks.iteritems():
+            if ht1 == ht2:
+                continue
+            ht_pair_sim[ht1][ht2] = bm1.jaccard_similarity(bm2)
+        ht_pair_sim[ht1] = sorted(ht_pair_sim[ht1].items(), key=operator.itemgetter(1), reverse=True)
+
+    f = open(os.path.join(path, filename), 'wt')
+    line = ""
+    for (ht1, all_pairs_sim) in ht_pair_sim.iteritems():
+        line += ht1
+        for pair in all_pairs_sim:
+            line += "\t{}:{}".format(pair[0], pair[1])
+        f.write("{}\n".format(line))
+        line = ""
+
+    f.close()
+
+
 def bitmask_file_writer(ht_bitmasks, filename="hashtags_bitmasks.tsv", path="data"):
     f = open(os.path.join(path, filename), 'wt')
 
@@ -103,6 +125,7 @@ if __name__ == "__main__":
                                        hashtags_bitmask=ht_bitmasks, graph_id=i)
         graphs_map[i] = (graph, hashtags)
 
+    jaccard_all_pairs_similarity_file_writer(ht_bitmasks)
     bitmask_file_writer(ht_bitmasks)
     # union_graph = join_graphs(graphs_map)
 
