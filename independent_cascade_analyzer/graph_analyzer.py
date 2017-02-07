@@ -239,24 +239,32 @@ def maximize_expected_outcome(g, source, hashtags, runs, current_outcome, outcom
 
 
 # TOTEST
-# Retrieve the k hashtags the vertex seems most responsible to
-def most_interested_in_hashtags(g, id, k, result_heap, hashtags=None):
+# Retrieve the hashtags oredered accord  to the the vertex interests
+def most_interested_in_hashtags(g, id, result_heap, hashtags=None):
+
     heapq.heapify(result_heap)
+
+    dict = {}
 
     # Assume id already translated
     edges = g.incident(id)
 
-    for e in edges:
-        edge = g.es[e]
-        for h in HASHTAGS:
-            cur_hashtags = []
-            cur_hashtags.extend(hashtags)
-            cur_hashtags.append(h)
-            homogeneity = homogeneity(cur_hashtags)
+    for h in HASHTAGS:
+        cur_hashtags = []
+        cur_hashtags.extend(hashtags)
+        cur_hashtags.append(h)
+        homogeneity = homogeneity(cur_hashtags)
+        for e in edges:
+            edge = g.es[e]
             if edge.hasKey(h):
-                weight = 1 / (edge[h]*homogeneity())
-                tup = (weight, h)
-                heapq.heappush(result_heap, tup)
+                weight = 1 / (edge[h] * homogeneity())
+                if  dict.has_key(h):
+                    dict[h] += weight
+                else:
+                    dict[h]  = weight
+    for key in dict.keys():
+        tup = (dict[key],key)
+        heapq.heappush(result_heap, tup)
 
 
 # Weight edges according to the input hashtag
