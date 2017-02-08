@@ -30,6 +30,8 @@ COST = "cost"
 BALANCE_FACTOR = 1
 # Max possible weight
 MAX_WEIGHT = 100000
+# Hashtags file
+HASHTAGS_FILE = "hashtags_bitmasks.tsv"
 
 
 # Load the graph in main memory
@@ -239,10 +241,10 @@ def maximize_expected_outcome(g, source, hashtags, runs, current_outcome, outcom
 
 
 # TOTEST
-# Retrieve the hashtags oredered accord  to the the vertex interests
-def most_interested_in_hashtags(g, id, result_heap, hashtags=None):
+# Retrieve the top-k hashtags according to the the vertex interests
+def most_interested_in_hashtags(g, id, k, result, hashtags=None):
 
-    heapq.heapify(result_heap)
+    w_heap = []
 
     dict = {}
 
@@ -261,10 +263,22 @@ def most_interested_in_hashtags(g, id, result_heap, hashtags=None):
                 if  dict.has_key(h):
                     dict[h] += weight
                 else:
-                    dict[h]  = weight
+                    dict[h] = weight
+
     for key in dict.keys():
         tup = (dict[key],key)
-        heapq.heappush(result_heap, tup)
+        w_heap.append(tup)
+
+    heapq.heapify(w_heap)
+
+    l = k
+    if len(w_heap) < k:
+        l = len(w_heap)
+
+    for i in range(0,l):
+        tup = heapq.heappop(w_heap)
+        result.append(tup[1])
+
 
 
 # Weight edges according to the input hashtag
@@ -382,7 +396,7 @@ def compute_shortest_paths(g, target, weights=WEIGHT, mode=IN, debug=True):
     if debug:
         print "Done."
 
-# TOTEST
+# Reconstruct cost of shortes paths to target
 def reconstruct_paths_cost(g,target, debug=True):
     if debug:
         print "[reconstruct_paths_cost] Reconstructing paths costs.."
@@ -418,6 +432,11 @@ def reconstruct_paths_cost(g,target, debug=True):
                     v_queue.append(u)
         if debug:
             print
+
+    for v in g.vs:
+        if v[ACTIVE] is False:
+            v[ACTIVE] is True
+            v[COST] = MAX_WEIGHT
 
     if debug:
         print "[reconstruct_paths_cost] Done."

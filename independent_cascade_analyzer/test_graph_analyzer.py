@@ -51,7 +51,20 @@ def is_path_all_tests():
     p = load_path(TEST_PATH_1)
     test_is_path(g, 0, 5, p)
 
+def test_reconstruct_paths_cost():
+    g = graph_analyzer.load_graph(TEST_GRAPH_1)
+    graph_analyzer.weight_edges(g, "sale")
+    graph_analyzer.compute_shortest_paths(g,1, debug=False)
+    print "Testing path cost reconstruction.."
+    graph_analyzer.reconstruct_paths_cost(g,1)
+    print "Done"
+    print "Result:"
+    for v in g.vs:
+        print "         ", v
+
+
 if __name__ == "__main__":
     print "Testing.."
-    is_path_all_tests()
+    #is_path_all_tests()
+    test_reconstruct_paths_cost()
     print "Done."
