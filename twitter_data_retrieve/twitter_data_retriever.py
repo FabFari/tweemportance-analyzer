@@ -4,7 +4,7 @@ import twitter
 from tweepy import *
 
 
-NOME = "matteosalvinimi"
+NOME = "realDonaldTrump"
 FILE = "tweets.txt"
 FILE_ANSWERS = "answers.txt"
 
@@ -41,8 +41,17 @@ def setup_2():
                      consumer_secret=consumer_secret,
                      access_token_key=access_token,
                      access_token_secret=access_token_secret)
-    rep = api.GetSearch(raw_query="q=salvini&count=50&pages=20")
-    print len(rep)
+    dict = {}
+    rep = api.GetSearch(raw_query="q=salvini&count=100&page=1")
+    for r in rep:
+        dict[r.id] = 1
+
+    rep = api.GetSearch(raw_query="q=salvini&count=100&page=2")
+    for r in rep:
+        dict[r.id] = 2
+
+    for k in dict.keys():
+        print k, ": ", dict[k]
     #replies = (q="to:{}".format(NOME), count=100, page=15)
     #print "Replies: ", len(replies)
 
@@ -64,13 +73,21 @@ def get_tweets(api,screenname=NOME):
             user = status.author
             print user.screen_name
             #replies = api.search(q="to:{}".format(NOME), sinceId = status.id)
-            replies = api.search(q="to:{}".format(NOME), count=100, page=1)
-            print "Replies: ", len(replies)
-            for a in replies:
-                print "Replie: ", a.id
-                f_a.write("{}:{}\n\n".format(status.id, a))
-            f.write("id:{}\n\n".format(status))#.format(t['id'], t['text']))
+            #replies = tweepy.Cursor(api.search(q="to:{}".format(NOME), count=1500, page=1)
+            #print "Replies: ", len(replies)
+            count = 0
+            dict = {}
+            for s in tweepy.Cursor(api.search, q="to:{}".format(NOME), since_id=status.id).items():
+                if dict.has_key(s.id):
+                    return
+                else :
+                    dict[s.id] = 1
+                    print "Replie: ", s.id, " " , s.text
+                    #f.write("id:{}\ntext:{}\n\n".format(s.id, s.text))
+                    count+=1
+                #f_a.write("{}:{}\n\n".format(status.id, a))
+            #f.write("id:{}\n\n".format(status))#.format(t['id'], t['text']))
 
 if __name__ == "__main__":
-    api = setup_2()
-    #get_tweets(api)
+    api = setup()
+    get_tweets(api)
