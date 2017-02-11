@@ -35,8 +35,10 @@ HASHTAGS_FILE = "hashtags_bitmasks.tsv"
 
 
 # Load the graph in main memory
-def load_graph(graph_in, translation_out=TRANSLATION_FILE):
-    print "Loading  graph.."
+def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=True):
+    if verbose:
+        print "[load_graph]   Loading  graph.."
+
     g = Graph(directed=True)
     # Open the graph file, and a  new file:
     # the new file will contain a mapping between the tweeter accounts and the nodes' IDs in the graph.
@@ -78,23 +80,23 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE):
             g.es[current_edge][MAIN] = False
 
             current_edge += 1
-
-    print "Graph loaded."
+    if verbose:
+        print "[load_graph]   Graph loaded."
     return g
-
 
 # TOTEST
 # TODO
 # Computes the homogeneity of the group of hashtags
-def homogeneity(hashtags):
+def homogeneity(hashtags, verbose=True):
+    if verbose:
+        print "[homogeneity]   Checking homogeneity."
     if len(hashtags) <= 1:
         return 1
     return 1
     # return 1 - (1 -graph_jaccard_similarity(hashtags))*BALANCE_FACTOR
 
-
 # Simulate the independent cascade process
-def independent_cascade_process(g, source, hashtags, result, debug=True):
+def independent_cascade_process(g, source, hashtags, result, verbose=True):
     balance_coeff = homogeneity(hashtags)
 
     # Stack containing the nodes activated in the previous iteration
@@ -113,15 +115,15 @@ def independent_cascade_process(g, source, hashtags, result, debug=True):
     # Each new iteration of this cycle is a new iteration of the process
     while len(it_cur) > 0:
 
-        if debug:
-            print "------------------------------------------------------"
-            print "Iteration: ", iteration
+        if verbose:
+            print "[independent_cascade_process]   ------------------------------------------------------"
+            print "[independent_cascade_process]   Iteration: ", iteration
 
         # Simulate the process for each newly active node
         while len(it_cur) > 0:
             v = it_cur.pop()
-            if debug:
-                print "     Considering current active node: ", v
+            if verbose:
+                print "[independent_cascade_process]     Considering current active node: ", v
 
             edges = g.incident(v)
             for e in edges:
@@ -136,22 +138,22 @@ def independent_cascade_process(g, source, hashtags, result, debug=True):
                         max = h
 
                 pr = g.es[e][max] * balance_coeff
-                if debug:
-                    print "     Probability of activation on the considered edge: ", pr
+                if verbose:
+                    print "[independent_cascade_process]     Probability of activation on the considered edge: ", pr
 
                 # Random number to simulate the biased coin flip
                 r = random.random()
 
-                if debug:
-                    print "     Value obtained: ", r
+                if verbose:
+                    print "[independent_cascade_process]     Value obtained: ", r
 
                 # If the result is head, activated the node
                 if r <= pr:
                     u = g.es[e].target
                     # If the node was already active, do nothing
                     if g.vs[u][ACTIVE] is False:
-                        if debug:
-                            print  "            Node ", u, " activated."
+                        if verbose:
+                            print  "[independent_cascade_process]     Node ", u, " activated."
                         g.vs[u][ACTIVE] = True
                         it_cur_n.append(u)
                         result.append(u)
@@ -160,13 +162,12 @@ def independent_cascade_process(g, source, hashtags, result, debug=True):
         it_cur = it_cur_n
         it_cur_n = []
         iteration += 1
-    if debug:
-        print "------------------------------------------------------"
-        print "Done."
-
+    if verbose:
+        print "[independent_cascade_process]   ------------------------------------------------------"
+        print "[independent_cascade_process]   Done."
 
 # Estimate the expected outcome of an independent cascade run
-def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome):
+def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbose=True):
     # This is the increment each node can get from a single run,
     # At the end, the number of increments received will be an estimation of the
     # probability of the node being activated.
@@ -176,8 +177,13 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome):
 
     avg_acts = 0
 
+    if verbose:
+        print "[estimate_expected_outcome]   Computing Independent Cascade Process expected outcome.."
+
     # Repeate the process "runs" times
     for i in range(runs):
+        if verbose:
+            print "[estimate_expected_outcome]   Starting run ", i
         activations = 0
         result = []
         independent_cascade_process(g, source, hashtags, result)
@@ -188,6 +194,8 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome):
         avg_acts += activations * inc
 
         deactivate(g)
+        if verbose:
+            print "[estimate_expected_outcome]   Run ",i, " completed."
 
     # Collect results
     for v in g.vs:
@@ -195,6 +203,9 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome):
 
     # Clean up
     reset_graph(g)
+
+    if verbose:
+        print "[estimate_expected_outcome]   Done."
 
     return avg_acts
 
@@ -204,22 +215,21 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome):
 def get_close_hahstags(hashtags_in, hashtags_out):
     hashtags_out.append("sale")
 
-
 # TOTEST
 # Maximize the expected outcome of an independent cascade run
-def maximize_expected_outcome(g, source, hashtags, runs, current_outcome, outcomes, debug=True):
-    if debug:
-        print "Maximizing expected outcome.."
+def maximize_expected_outcome(g, source, hashtags, runs, current_outcome, outcomes, verbose=True):
+    if verbose:
+        print "[maximize_expected_outcome]   Maximizing expected outcome.."
 
-    if debug:
-        print "     Retrieving most suitable hashtags.."
+    if verbose:
+        print "[maximize_expected_outcome]   Retrieving most suitable hashtags.."
     suggested_hashtags = []
     get_close_hahstags(hashtags, suggested_hashtags)
-    if debug:
-        print "     Done."
+    if verbose:
+        print "[maximize_expected_outcome]   Hashatags retrieved."
 
-    if debug:
-        print  "     Starting simulations.."
+    if verbose:
+        print  "[maximize_expected_outcome]   Starting simulations.."
 
     for h in suggested_hashtags:
         current_hashtags = []
@@ -233,12 +243,11 @@ def maximize_expected_outcome(g, source, hashtags, runs, current_outcome, outcom
             tup = (n, positivity)
             outcomes[h] = tup
 
-    if debug:
-        print "     Done."
+    if verbose:
+        print "[maximize_expected_outcome]   Done."
 
-    if debug:
-        print "Done"
-
+    if verbose:
+        print "[maximize_expected_outcome]   Done."
 
 # TOTEST
 # Retrieve the top-k hashtags according to the the vertex interests
@@ -279,10 +288,10 @@ def most_interested_in_hashtags(g, id, k, result, hashtags=None):
         tup = heapq.heappop(w_heap)
         result.append(tup[1])
 
-
-
 # Weight edges according to the input hashtag
-def weight_edges(g, field, homogeneity=1):
+def weight_edges(g, field, homogeneity=1, verbose=False):
+    if verbose:
+        print "[weight_edges]   Weighting edges.."
     for edge in g.es:
         weight = MAX_WEIGHT
         if edge.attributes().has_key(field):
@@ -291,7 +300,10 @@ def weight_edges(g, field, homogeneity=1):
                 weight = 1 / den
 
         edge[WEIGHT] = weight
-
+        if verbose:
+            print "[weight_edges]   Edge:",edge.source, " ", edge.target, "  weights ", edge[WEIGHT]
+    if verbose:
+        print "[weight_edges]   Done."
     # Stub method
     """g.es[0][WEIGHT] = 1
     g.es[1][WEIGHT] = 3
@@ -302,26 +314,32 @@ def weight_edges(g, field, homogeneity=1):
     g.es[6][WEIGHT] = 2
     g.es[7][WEIGHT] = 1"""
 
-# Check whether the suggested side track edges can be inserted into a shortest path
-def is_path(g,source, target, path, debug=True):
+# Check whether the suggested side track edges can be inserted into a shortest path with no loops
+def is_straight_path(g, source, target, path, verbose=True):
     d_path = {}
     count = 0
 
-    if debug:
-        print "[is_path] Path: ", path
+    if verbose:
+        print "[is_path]   Checking if path: ", path, " is  indeed a path.."
     for t in path:
         key = int(t[1])
         d_path[key] = int(t[2])
 
-    if debug:
-        print "[is_path] Edges: ", d_path
+    if verbose:
+        print "[is_path]   Edges: ", d_path
     cur = source
     while cur != target:
-        if debug:
-            print "[is_path] Current node:", cur
+
+        v = g.vs[cur]
+        if v[ACTIVE] is True:
+            return False
+        v[ACTIVE] = True
+
+        if verbose:
+            print "[is_path]   Current node:", cur
         if d_path.has_key(cur):
-            if debug:
-                print "[is_path] Taking side edge from: ", cur
+            if verbose:
+                print "[is_path]   Taking side edge from: ", cur
             old = cur
             cur = d_path[cur]
             del d_path[old]
@@ -334,15 +352,20 @@ def is_path(g,source, target, path, debug=True):
             if edge[MAIN] is True:
                 cur = edge.target
 
+    if verbose:
+        print "[is_path]   Done."
+
     return count == len(path)
 
 # Remove the edges incident to the target node and return them in a list
-def remove_incidents(g, target, debug=True):
-    if debug:
-        print "Temporary removing useless edges.."
+def remove_incidents(g, target, verbose=True):
+    if verbose:
+        print "[remove_incidents]   Temporary removing useless edges.."
 
     removed = {}
     out_edges = g.incident(target)
+    if verbose:
+        print "[remove_incidents]   Removing edges: "
     for id in out_edges:
         edge = g.es[id]
         key = edge.target
@@ -356,50 +379,57 @@ def remove_incidents(g, target, debug=True):
 
         # Save the dictionary
         removed[key] = dict
+        if verbose:
+            print "[remove_incidents]   Edge: ", edge.source, " ", edge.target
 
     g.delete_edges(out_edges)
 
-    if debug:
-        print "Done."
-        print
-        print "Edges removed: ", removed
+    if verbose:
+        print "[remove_incidents]   Done."
 
     return removed
 
 # Add edges in the list to the target node
-def add_edges(g, target, edges, debug=True):
-    if debug:
-        print "Reinserting removed edges.."
+def add_edges(g, target, edges_list, verbose=True):
+    if verbose:
+        print "[add_edges]   Inserting edges:"
 
-    for k in edges.keys():
+    for k in edges_list.keys():
         g.add_edge(target, k)
+        if verbose:
+            print "[add_edges]   Inserted edge:", target, " ", k
+
+    if verbose:
+        print "[add_edges]   Done. Loading now attibutes.."
 
     edges = g.incident(target)
-    for id in edges:
-        edge = g.es[id]
+    for e in edges:
+        edge = g.es[e]
+        if verbose:
+            print "[add_edges]   Loading attributes on edge: ", edge.source, " ", edge.target
         key = edge.target
-        dict = edges[key]
+        dict = edges_list[key]
         for k in dict.keys():
             edge[k] = dict[k]
 
-    if debug:
-        print "Done."
+    if verbose:
+        print "[add_edges]   Done."
 
 # Compute the shortest paths from every node to target
-def compute_shortest_paths(g, target, weights=WEIGHT, mode=IN, debug=True):
-    if debug:
-        print "Computing inverse shortest paths.. "
+def compute_shortest_paths(g, target, weights=WEIGHT, mode=IN, verbose=True):
+    if verbose:
+        print "[compute_shortest_paths]   Computing inverse shortest paths.. "
     shortest_paths = g.get_shortest_paths(target, weights=weights, mode=mode, output="epath")
     for p in shortest_paths:
         for e in p:
             g.es[e][MAIN] = True
-    if debug:
-        print "Done."
+    if verbose:
+        print "[compute_shortest_paths]   Done."
 
-# Reconstruct cost of shortes paths to target
-def reconstruct_paths_cost(g,target, debug=True):
-    if debug:
-        print "[reconstruct_paths_cost] Reconstructing paths costs.."
+# Reconstruct cost of shortest paths to target
+def reconstruct_paths_cost(g, target, verbose=True):
+    if verbose:
+        print "[reconstruct_paths_cost]   Reconstructing paths costs.."
 
     v_queue = deque()
     v_queue.append(target)
@@ -411,110 +441,136 @@ def reconstruct_paths_cost(g,target, debug=True):
         for e in edges:
             if g.es[e][MAIN] is True:
                 u = g.es[e].target
-                if debug:
-                    print "[reconstruct_paths_cost]     Edge: ", g.es[e].source, " ", g.es[e].target, \
+                if verbose:
+                    print "[reconstruct_paths_cost]   Edge: ", g.es[e].source, " ", g.es[e].target, \
                         " is in some shortest path with cost", g.es[e][WEIGHT]
                 g.vs[v][COST] = g.es[e][WEIGHT] + g.vs[u][COST]
                 break
 
         edges = g.incident(v, mode=IN)
-        if debug:
-            print "[reconstruct_paths_cost]     Considering  outer neighbors of ", v
+        if verbose:
+            print "[reconstruct_paths_cost]   Considering  outer neighbors of ", v
         for e in edges:
             if g.es[e][MAIN] is True:
                 u = g.es[e].source
-                if debug:
-                    print "         Considering node ", u
+                if verbose:
+                    print "[reconstruct_paths_cost]   Considering node ", u
                 if g.vs[u][ACTIVE] is False:
-                    if debug:
-                        print "         Node ", u, " is now active."
+                    if verbose:
+                        print "[reconstruct_paths_cost]   Node ", u, " is now active."
                     g.vs[u][ACTIVE] = True
                     v_queue.append(u)
-        if debug:
-            print
 
     for v in g.vs:
         if v[ACTIVE] is False:
             v[ACTIVE] is True
             v[COST] = MAX_WEIGHT
 
-    if debug:
-        print "[reconstruct_paths_cost] Done."
+    if verbose:
+        print "[reconstruct_paths_cost]   Done."
 
-# TOTEST
-def compute_top_k_sidetrack_edges(g, k, debug = True):
+# Compute the increment in cost of the possible paths when taking sidetrack edges
+def compute_sidetrack_edges_increment(g, verbose = True):
     sidetrack_edges = []
 
-    count = 0
-    max = 0
+    #count = 0
 
-    if debug:
-        print "[compute_sidetrack_edges_increment] Computing increment in cost of sidetrack edges.."
+    if verbose:
+        print "[compute_sidetrack_edges_increment]   Computing increment in cost of sidetrack edges.."
 
-    costs = []
-    heapq.heapify(costs)
+    #costs = []
+    #heapq.heapify(costs)
 
     # Can be improved
     for edge in g.es:
         if edge[MAIN] is False:
-            count += 1
-            edge[INC] = edge[WEIGHT] + g.vs[edge.target][COST] - g.vs[edge.source][COST]
-            if debug:
-                print "[compute_sidetrack_edges_increment]      Edge: ", edge.source, " "\
-                        , edge.target, " Side_track_cost: ", edge[INC]
-            if count <= k - 1:
-                heapq.heappush(costs,edge[INC])
+            #count += 1
+            target = g.vs[edge.target]
+            if target[COST] >= MAX_WEIGHT:
+                continue
+            else :
+                edge[INC] = edge[WEIGHT] + g.vs[edge.target][COST] - g.vs[edge.source][COST]
+                tup = (edge[INC], edge.source, edge.target)
+                sidetrack_edges.append(tup)
+                if verbose:
+                    print "[compute_sidetrack_edges_increment]   Edge: ", edge.source, " "\
+                            , edge.target, \
+                            " Side_track_cost= edge[WEIGHT] + g.vs[edge.target][COST] - g.vs[edge.source][COST] =", \
+                            edge[WEIGHT], "+", g.vs[edge.target][COST], "-", g.vs[edge.source][COST], "=", \
+                            edge[INC]
+            """if count <= k - 1:
+                heapq.heappush(costs,(1.0/edge[INC]))
                 tup = (edge[INC], edge.source, edge.target)
                 sidetrack_edges.append(tup)
             if count > k - 1:
                 max = heapq.heappop(costs)
-                cur = 1/edge[INC]
-                if cur < max:
+                cur = 1.0/edge[INC]
+                if cur >= max:
                     tup = (edge[INC], edge.source, edge.target)
                     sidetrack_edges.append(tup)
                     heapq.heappush(costs, cur)
-                elif cur == max:
-                    tup = (edge[INC], edge.source, edge.target)
-                    sidetrack_edges.append(tup)
-                    heapq.heappush(costs, max)
                 else:
-                    heapq.heappush(costs, max)
-    if debug:
-        print "[compute_sidetrack_edges_increment] Done."
+                    heapq.heappush(costs, max)"""
+
+    if verbose:
+        print "[compute_sidetrack_edges_increment]   Ordering sidetrack edges.."
 
     heapq.heapify(sidetrack_edges)
-    ordered_s_e = []
-    for i in range(1,k):
-        ordered_s_e.append(heapq.heappop(sidetrack_edges))
+    """ordered_s_e = []
 
-    return ordered_s_e
+    for i in range(0,k):
+        el = heapq.heappop(sidetrack_edges)
+        ordered_s_e.append(el)"""
+
+    if verbose:
+        print "[compute_sidetrack_edges_increment]   Done."
+
+    #return ordered_s_e
+    return sidetrack_edges
 
 # TOTEST
-def get_k_shortest_paths(g, source, target, result, k=5, debug=True):
+def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     # Need first to remove outgoing edges from target, edges will be restored at the end of the computation
     removed = remove_incidents(g, target)
 
-    if debug:
-        print "Computing ", k, "-least cost paths.."
-        print "Source: ", source
-        print "Target: ", target
+    if verbose:
+        print "[get_k_shortest_paths]   Computing ", k, "-least cost paths.."
+        print "[get_k_shortest_paths]   Source: ", source
+        print "[get_k_shortest_paths]   Target: ", target
 
-    compute_shortest_paths(g, target, debug=debug)
+    compute_shortest_paths(g, target, verbose=verbose)
 
     reconstruct_paths_cost(g,target)
+
+    deactivate(g, verbose=False)
 
     # Cost of the optimal path
     OPT = g.vs[source][COST]
 
-    if debug:
-        print "Computing side edges increment in cost.."
+    if verbose:
+        print "[get_k_shortest_paths]   Computing side edges increment in cost.."
 
-    ordered_s_e = compute_top_k_sidetrack_edges(g,k-1)
+    sidetrack_edges = compute_sidetrack_edges_increment(g)
 
-    if debug:
-        print "Candidate shortest paths side edges: ", ordered_s_e
+    if verbose:
+        print "[get_k_shortest_paths]   Done."
+        print "[get_k_shortest_paths]   Computing candidate shortest paths side edges.. "
+
+    ordered_s_e = []
     # The least cost path is already known
-    paths_found = 1
+    candidates_found = 1
+    while len(sidetrack_edges) > 0 & candidates_found < k:
+        p = []
+        tup = heapq.heappop(sidetrack_edges)
+        p.append(tup)
+        if is_straight_path(g, source, target, p, verbose=False):
+            ordered_s_e.append(tup)
+            candidates_found += 1
+
+    #Update the number of paths
+    k = candidates_found
+
+    # TODO
     candidate_paths = []
     s = ()
     tup = (OPT, s)
@@ -533,8 +589,8 @@ def get_k_shortest_paths(g, source, target, result, k=5, debug=True):
     for l in range(1, k - 1):
         for tup in itertools.combinations(ordered_s_e, l):
             candidate_paths.append(tup)
-            if debug:
-                print "Tuple: ", tup
+            if verbose:
+                print "[get_k_shortest_paths]   Tuple: ", tup
 
     # Can be improved
     for p in candidate_paths:
@@ -544,13 +600,13 @@ def get_k_shortest_paths(g, source, target, result, k=5, debug=True):
 
         # Check if path might be in the k-least cost paths
         if cost <= upper_bound:
-            if is_path(source, target, p):
+            if is_straight_path(source, target, p):
                 tup = (cost + OPT, p)
                 heapq.heappush(paths, tup)
 
-    if debug:
+    if verbose:
         for p in paths:
-            print p
+            print "[get_k_shortest_paths]   Path: ", p
 
     total = 0
     for i in range(0, k):
@@ -566,7 +622,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, debug=True):
 
 # TOTEST
 # TARGET MAXIMIZATION HEURISTIC
-def maximize_target_outcome(g, source, target, tweet_hashtags, current_outcome, outcomes, k=1):
+def maximize_target_outcome(g, source, target, tweet_hashtags, outcomes, k=1):
     pref_hashtags = []
     most_interested_in_hashtags(g, target, k, pref_hashtags)
     for i in range(0, k):
@@ -591,35 +647,48 @@ def maximize_target_outcome(g, source, target, tweet_hashtags, current_outcome, 
 # UTILS
 
 # Deactivate nodes
-def deactivate(g):
+def deactivate(g, verbose=False):
+    if verbose:
+        print "[deactivate]   Deactivating nodes.."
     # Deactivate all nodes
     for v in g.vs:
         v[ACTIVE] = False
 
+    if verbose:
+        print "[deactivate]   Done."
+
 
 # Reset edge weights
-def reset_weights(g):
+def reset_weights(g, verbose=False):
+    if verbose:
+        print "[reset_weights]   Resetting weights.."
     for e in g.es:
         e[WEIGHT] = 0.0
+    if verbose:
+        print "[reset_weights]   Done."
 
 
 # Reset the graph to default settings
-def reset_graph(g):
-    print "Resetting graph.."
+def reset_graph(g, verbose=False):
+    if verbose:
+        print "[reset_graph]   Resetting graph.."
     # Reset nodes to their default settings
     for v in g.vs:
         v[ACTIVE] = False
         v[EXPECTED_VALUE] = 0.0
-        print v
+        if verbose:
+            print "[reset_graph]   v"
 
     # Reset edges to their default settings
     for e in g.es:
         e[WEIGHT] = 0.0
         e[MAIN] = False
         e[INC] = 0.0
-        print e
+        if verbose:
+            print "[reset_graph]   e"
 
-    print "Done."
+    if verbose:
+        print "[reset_graph]   Done."
 
 
 if __name__ == "__main__":
