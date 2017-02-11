@@ -80,11 +80,17 @@ def jaccard_top_k_similar_hashtags(ht_pair_sim, hashtags, k=2):
 
 if __name__ == "__main__":
     ht_bitmask = bitmask_file_parser()
+
     for (ht, bm) in ht_bitmask.iteritems():
         print "{}: {}".format(ht, bm)
-    graph_jaccard_similarity(ht_bitmask)
+
+    test_dict = {}
+    test_dict['C'] = ht_bitmask['C']
+    test_dict['F'] = ht_bitmask['F']
+
+    print "J(C, F) =", graph_jaccard_similarity(test_dict)
 
     ht_pair_sim = jaccard_all_pairs_similarity_file_parser()
-    print jaccard_top_k_similar_hashtags(ht_pair_sim, ['A', 'C'])
+    print jaccard_top_k_similar_hashtags(ht_pair_sim, ['A', 'D'])
 
 

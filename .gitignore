@@ -136,3 +136,7 @@ fabric.properties
 
 # Generated Folders
 data/
+
+# Generated Files
+*.txt
+*.tsv
