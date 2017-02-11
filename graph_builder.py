@@ -2,11 +2,10 @@ import os
 import operator
 
 from collections import defaultdict
-from collections import deque
 from BitVector import BitVector
 
 SOURCE_LABEL = "S"
-NUM_TWEETS = 3
+NUM_TWEETS = 4
 
 
 def tweet_parser(filename, path="data", hashtags_map=None, hashtags_bitmask=None, graph_id=None, debug=False):
@@ -26,6 +25,10 @@ def tweet_parser(filename, path="data", hashtags_map=None, hashtags_bitmask=None
         if debug:
             print "edge:", edge
 
+        if edge[1] == 'S':
+            line = f.readline()
+            continue
+
         if edge[0] not in tweet_graph:
             tweet_graph[edge[0]] = set(edge[1])
         else:
@@ -42,6 +45,9 @@ def tweet_parser(filename, path="data", hashtags_map=None, hashtags_bitmask=None
             hashtags_bitmask[h][graph_id] = 1
 
     if debug:
+        print tweet_graph
+        '''
+        from collections import deque
         queue = deque(tweet_graph[SOURCE_LABEL])
         # queue = tweet_graph[SOURCE_LABEL]
         print SOURCE_LABEL
@@ -49,6 +55,7 @@ def tweet_parser(filename, path="data", hashtags_map=None, hashtags_bitmask=None
             node = queue.popleft()
             print node
             queue.extend(tweet_graph[node])
+        '''
 
     f.close()
 
