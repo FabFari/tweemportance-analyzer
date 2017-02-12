@@ -48,7 +48,7 @@ def setup():
     api = tweepy.API(auth)
     return api
 
-
+# prova
 # prende i primi 100 tweets della source
 def get_source_tweets(api, screenname=SOURCE):
     tweets_retrieved = 0
