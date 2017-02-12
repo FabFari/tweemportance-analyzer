@@ -5,7 +5,7 @@ import tweepy
 
 from tweepy import *
 
-SOURCE = "VittorioSgarbi"#"BissoliAn" # "matteosalvinimi"
+SOURCE = "BissoliAn" # "matteosalvinimi" "VittorioSgarbi"#
 FILE_TWEETS = "tweets.txt"
 FILE_REPLIES = "replies.txt"
 DATA_DIRECTORY = "data/"
@@ -14,7 +14,7 @@ PEOPLE_DIRECTORY = "people/"
 PEOPLE_VISITED = "people_visited.txt"
 REPLIES_SOURCE = "replies_salvini.txt"
 
-NUM_TWEETS = 1
+NUM_TWEETS = 2
 TIME_TO_SLEEP = 960
 
 access_token = "815961135321059330-7i5Mh5wC2q6WNJJiJMrlqD6k3m9DRMm"
@@ -106,7 +106,7 @@ def get_source_tweets(api, screen_name=SOURCE, verbose=True):
                 if min_id > status.id:
                     min_id = status.id
 
-                line = "{}\n{}\n".format(status.id, status.text.encode('utf-8').replace("\n", " "))
+                line = "{}\t{}\n".format(status.id, status.text.encode('utf-8').replace("\n", " ").replace("\t"," "))
                 f.write(line)
                 if verbose:
                     print line.replace("\n", "\t")
@@ -169,12 +169,15 @@ def generate_tweets_file():
         os.makedirs(path_person)
 
     with open(os.path.join(os.pardir, DATA_DIRECTORY, FILE_TWEETS), "r") as f:
-       for r in f:
-            row = r.split("\t")
-            with open(path_person + '/' + row[0], 'w')as f_tweet:
-
-
-                f_tweet.write(row[1])
+        for r in f:
+            r = r.replace("#", " #")
+            line = r.split("\t")
+            with open(path_person + '/' + line[0], 'w')as f_tweet:
+                hashtags = set([i[1:]  for i in r.split() if i.startswith("#")])
+                s = ""
+                for h in hashtags:
+                    s += "#"+h+"\t"
+                f_tweet.write(s)
 
 
 # data la persona, andiamo a prendere tutti gli archi uscenti per tom, per andrea andiamo a prendere tutte le
@@ -281,4 +284,4 @@ if __name__ == "__main__":
     api = setup()
     get_source_tweets(api)
     generate_tweets_file()
-    get_graph_data()
+    # get_graph_data()
