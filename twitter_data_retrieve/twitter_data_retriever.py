@@ -169,13 +169,12 @@ def generate_tweets_file():
         os.makedirs(path_person)
 
     with open(os.path.join(os.pardir, DATA_DIRECTORY, FILE_TWEETS), "r") as f:
-        i = 0
-        for r in f:
+       for r in f:
             row = r.split("\t")
             with open(path_person + '/' + row[0], 'w')as f_tweet:
-                f_tweet.write(row[1])
 
-            i += 1
+
+                f_tweet.write(row[1])
 
 
 # data la persona, andiamo a prendere tutti gli archi uscenti per tom, per andrea andiamo a prendere tutte le
