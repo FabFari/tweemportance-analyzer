@@ -5,7 +5,7 @@ import tweepy
 
 from tweepy import *
 
-SOURCE = "BissoliAn" # "matteosalvinimi" "VittorioSgarbi"#
+SOURCE = "BissoliAn"#"matteosalvinimi" # "VittorioSgarbi"#
 FILE_TWEETS = "tweets.txt"
 FILE_REPLIES = "replies.txt"
 DATA_DIRECTORY = "data/"
@@ -14,7 +14,7 @@ PEOPLE_DIRECTORY = "people/"
 PEOPLE_VISITED = "people_visited.txt"
 REPLIES_SOURCE = "replies_salvini.txt"
 
-NUM_TWEETS = 2
+NUM_TWEETS = 1
 TIME_TO_SLEEP = 960
 
 access_token = "815961135321059330-7i5Mh5wC2q6WNJJiJMrlqD6k3m9DRMm"
@@ -177,6 +177,7 @@ def generate_tweets_file():
                 s = ""
                 for h in hashtags:
                     s += "#"+h+"\t"
+                s += "\n"
                 f_tweet.write(s)
 
 
@@ -247,7 +248,7 @@ def get_graph_data(verbose=True):
                 print "Current person: ", name
 
             # prendiamo tutte le risposte rivolte a name
-            ret = get_replies(screen_name=name, max_replies=40)
+            ret = get_replies(screen_name=name, max_replies=10)
             print "ret: ", ret
 
             if ret != -1 or name == SOURCE:
@@ -284,4 +285,4 @@ if __name__ == "__main__":
     api = setup()
     get_source_tweets(api)
     generate_tweets_file()
-    # get_graph_data()
+    get_graph_data()
