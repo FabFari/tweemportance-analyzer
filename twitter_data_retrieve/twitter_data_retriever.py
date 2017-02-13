@@ -5,7 +5,7 @@ import tweepy
 
 from tweepy import *
 
-SOURCE = "BissoliAn"#"matteosalvinimi" # "VittorioSgarbi"#
+SOURCE = "matteosalvinimi" ## "BissoliAn"# "VittorioSgarbi"#
 FILE_TWEETS = "tweets.txt"
 FILE_REPLIES = "replies.txt"
 DATA_DIRECTORY = "data/"
@@ -14,9 +14,10 @@ PEOPLE_DIRECTORY = "people/"
 PEOPLE_VISITED = "people_visited.txt"
 REPLIES_SOURCE = "replies_salvini.txt"
 
-NUM_TWEETS = 1
+NUM_TWEETS = 100
 TIME_TO_SLEEP = 960
 
+'''
 access_token = "815961135321059330-7i5Mh5wC2q6WNJJiJMrlqD6k3m9DRMm"
 access_token_secret = "9yDVE9SlD1qwHNPcew3mxTysYgU7onmEVmFvpnWsKr844"
 consumer_key = "kZEJIcJ5t9FNGWhMEkm8WyEV7"
@@ -27,8 +28,6 @@ access_token = '2341848095-rFwC9RZJceJGUvAsTEUivc8Hq6mdaHBGoFlNo44'
 access_token_secret = 'xFCaYxcGjN2X4aVCXu3cV0U8spIAiiVgwabygVfFkmIbU'
 consumer_key = 'tZRi2DVFSeEl4K77R2yNLE8aQ'
 consumer_secret = 'Wnewl8PFjgBC9QlIimLpirYvdPvrvE9Mx4vEOeCvFPeuQr9s5G'
-'''
-
 
 
 def setup():
@@ -248,7 +247,10 @@ def get_graph_data(verbose=True):
                 print "Current person: ", name
 
             # prendiamo tutte le risposte rivolte a name
-            ret = get_replies(screen_name=name, max_replies=10)
+            if name == SOURCE:
+                ret = get_replies(screen_name=name)
+            else:
+                ret = get_replies(screen_name=name, max_replies=100)
             print "ret: ", ret
 
             if ret != -1 or name == SOURCE:
