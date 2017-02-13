@@ -239,7 +239,7 @@ def get_close_hahstags(hashtags_in, k = 5):
     return result
 
 # Maximize the expected outcome of an independent cascade run
-def maximize_expected_outcome(g, source, current_hashtags, runs, current_outcome, verbose=True):
+def maximize_expected_outcome(g, source, current_hashtags, runs, current_outcome, verbose=False):
     outcomes = {}
     if verbose:
         print "[maximize_expected_outcome]   Maximizing expected outcome.."
@@ -272,33 +272,40 @@ def maximize_expected_outcome(g, source, current_hashtags, runs, current_outcome
 
     return outcomes
 
-# TOTEST
 # Retrieve the top-k hashtags according to the the vertex interests
 def most_interested_in_hashtags(g, id, k=3, tweet_hashtags=None, verbose=False):
     result = []
     weighted_heap = []
 
     hashtags_weight = {}
-    edges = g.incident(id)
+    edges = g.incident(id, mode=IN)
     if verbose:
         print "[most_interested_in_hashtags]   Retrieve top k hashtags according to vertex interests.."
     for h in hashtags:
+        if verbose:
+            print "[most_interested_in_hashtags]   Trying hashtag: ", h
         cur_hashtags = []
         if tweet_hashtags is not None:
             cur_hashtags.extend(tweet_hashtags)
         cur_hashtags.append(h)
         hmg= homogeneity(cur_hashtags)
+        if verbose:
+            print "[most_interested_in_hashtags]   Homogeneity of current hashtag set: ", hmg
         for e in edges:
             edge = g.es[e]
             if edge[h] > 0:
                 weight = 1 / (edge[h] * hmg)
             else:
                 weight = MAX_WEIGHT
-
+            if verbose:
+                print "[most_interested_in_hashtags]   Edge probability on hashtag", h, ": ", edge[h]
+                print "[most_interested_in_hashtags]   Weight: ", weight
             if  h in hashtags_weight:
                 hashtags_weight[h] += weight
             else:
                 hashtags_weight[h] = weight
+            if verbose:
+                print "[most_interested_in_hashtags]   Updated hashtag weight: ", hashtags_weight[h]
 
     for e in hashtags_weight.keys():
         tup = (hashtags_weight[e],e)
@@ -724,7 +731,7 @@ if __name__ == "__main__":
     #
     g = setup()
     # print hashtags[2], hashtags[1]
-    print most_interested_in_hashtags(g,5)
+    print most_interested_in_hashtags(g,7)
     '''cur_outcome = []
     n = estimate_expected_outcome(g, 0,[hashtags[2], hashtags[1]], 5, cur_outcome)
     print n
