@@ -16,7 +16,7 @@ PEOPLE_VISITED = "people_visited.txt"
 REPLIES_SOURCE = "replies_salvini.txt"
 
 NUM_TWEETS = 100
-TIME_TO_SLEEP = 960
+TIME_TO_SLEEP = 100
 
 consumer_key2 = 'gPs0nRfmeRjGoe58RubIYmYPv'
 consumer_secret2 = 'JQS8MVRW9ANfZQkQp3XzUpLfX7xm0pP9CTTHnzgsFRYNptWOlY'
@@ -295,13 +295,13 @@ def get_graph_data(verbose=True):
                     setup(access_token, access_token_secret, consumer_key, consumer_secret)
                     try_keys = 0
                     if verbose:
-                        print "We will try again in 8 minutes, Everything comes to him who waits..",strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                        print "We will try again in {} seconds, Everything comes to him who waits..{}".format(TIME_TO_SLEEP/2, strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                         print TIME_TO_SLEEP/2
 
                     # se tutte e due le chiavi non vanno allora e necessario aspettare, Twitter mi ha cacciato, aspettiamo e rifacciamo
                     time.sleep(TIME_TO_SLEEP/2)
                     if verbose:
-                        print "8 minutes left",strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                        print "{} seconds left {}".format(TIME_TO_SLEEP/2, strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                     time.sleep(TIME_TO_SLEEP/2)
 
             if verbose:
