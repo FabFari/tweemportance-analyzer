@@ -1,4 +1,5 @@
 import os
+import time
 import heapq
 
 from collections import defaultdict
@@ -60,9 +61,52 @@ def jaccard_all_pairs_similarity_file_parser(filename="jaccard_all_pairs_similar
             all_pair_list = line.strip("\n").split("\t")
             ht = all_pair_list.pop(0)
             all_pair_list_splitted = [pair.split(":") for pair in all_pair_list]
-            ht_pair_sim[ht] = [(float(pair[1]), pair[0]) for pair in all_pair_list_splitted]
+            # ht_pair_sim[ht] = [(float(pair[1]), pair[0]) for pair in all_pair_list_splitted]
+            ht_pair_sim[ht] = [pair[0] for pair in all_pair_list_splitted]
 
     return ht_pair_sim
+
+
+def count_rankings(ht_pair_sim, hashtags, ht, pos):
+    count = 0
+
+    for ranking in hashtags:
+        if ht_pair_sim[ranking][pos] == ht:
+            count += 1
+
+    return count
+
+
+def medrank_algorithm(ht_pair_sim, hashtags, k=2):
+    num_hashtags = len(hashtags)
+    rank_size = len(ht_pair_sim.values()[0])
+
+    available_hts = []
+    for ht in ht_pair_sim.keys():
+        if ht not in hashtags:
+            available_hts.append(ht)
+
+    # print "available_hts:", available_hts
+
+    theta = float(num_hashtags) / 2.0
+    # print "theta:", theta
+    scores = defaultdict(lambda: {'score': 0, 'selected': False})
+
+    ranking = []
+
+    for i in range(rank_size):
+        # print "i:", i
+        for ht in available_hts:
+            scores[ht]['score'] += count_rankings(ht_pair_sim, hashtags, ht, i)
+            # print "score[{}] = {}".format(ht, scores[ht]['score'])
+            if scores[ht]['score'] > theta and not scores[ht]['selected']:
+                scores[ht]['selected'] = True
+                ranking.append(ht)
+                k -= 1
+            if k <= 0:
+                return ranking
+
+    return ranking
 
 
 def jaccard_top_k_similar_hashtags(ht_pair_sim, hashtags, k=2):
@@ -92,7 +136,8 @@ if __name__ == "__main__":
     for (ht, bm) in ht_bitmask.iteritems():
         print "{}: {}".format(ht, bm)
 
-    hashtag_list = ['#A', '#D', '#C']
+    # hashtag_list = ['#A', '#D', '#C']
+    hashtag_list = ['A', 'D']
 
     test_dict = {}
     for ht in hashtag_list:
@@ -101,6 +146,11 @@ if __name__ == "__main__":
     print "J =", graph_jaccard_similarity(test_dict)
 
     ht_pair_sim = jaccard_all_pairs_similarity_file_parser()
+    t1 = time.time()
     print jaccard_top_k_similar_hashtags(ht_pair_sim, hashtag_list)
-
-
+    t2 = time.time()
+    print "Elapsed Time:", t2 - t1
+    t1 = time.time()
+    print medrank_algorithm(ht_pair_sim, hashtag_list)
+    t2 = time.time()
+    print "Elapsed Time:", t2 - t1
