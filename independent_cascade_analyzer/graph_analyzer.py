@@ -25,6 +25,9 @@ hashtags_bitmask = None
 hashtags = None
 hashtags_all_pairs_similarity = None
 
+#Translations map
+translations_map = {}
+
 # Vertices attributes
 ACTIVE = "active"
 EXPECTED_VALUE = "e_v"
@@ -55,6 +58,7 @@ def set_up_edges_empty_attributes(graph):
 
 # Load the graph in main memory
 def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
+    global translations_map
     if verbose:
         print "[load_graph]   Loading  graph.."
 
@@ -65,7 +69,6 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
         tsvin = csv.reader(tsvin, delimiter='\t')
         tsvout = csv.writer(tsvout, delimiter='\t')
 
-        translator = {}
         current_id = 0
         current_edge = 0
 
@@ -75,9 +78,9 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
             for i in range(0, 2):
                 twitter_id = row[i]
                 # If not create a new vertex and update the mapping
-                if translator.has_key(twitter_id) is False:
-                    translator[twitter_id] = current_id
-                    tsvout.writerow([twitter_id, translator[twitter_id]])
+                if translations_map.has_key(twitter_id) is False:
+                    translations_map[twitter_id] = current_id
+                    tsvout.writerow([twitter_id, translations_map[twitter_id]])
 
                     g.add_vertex()
                     g.vs[current_id][ACTIVE] = False
@@ -87,7 +90,7 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
                     current_id += 1
 
             # Add the edge to the graph
-            g.add_edge(translator.get(row[0]), translator.get(row[1]))
+            g.add_edge(translations_map.get(row[0]), translations_map.get(row[1]))
 
             # Add the edge attributes
             lenght = len(row)
@@ -102,6 +105,10 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
     if verbose:
         print "[load_graph]   Graph loaded."
     return g
+
+# Get node id from screen_name
+def translate(screen_name):
+    return translations_map[screen_name]
 
 # Computes the homogeneity of the group of hashtags
 def homogeneity(hashtags_list, verbose=False):
@@ -731,12 +738,14 @@ if __name__ == "__main__":
     #
     g = setup()
     # print hashtags[2], hashtags[1]
-    print most_interested_in_hashtags(g,7)
-    '''cur_outcome = []
+    #print most_interested_in_hashtags(g,7)
+    cur_outcome = []
     n = estimate_expected_outcome(g, 0,[hashtags[2], hashtags[1]], 5, cur_outcome)
     print n
+    print cur_outcome
     result = maximize_expected_outcome(g,0,[hashtags[2], hashtags[1]] , 5, cur_outcome)
-    print result'''
+    print result
+    print translate("matteosalvinimi")
     # r = g.get_shortest_paths(0,4)
     # print r
 
