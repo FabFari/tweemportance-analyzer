@@ -20,12 +20,12 @@ WEIGHT = "weight"
 INC = "increase"
 MAIN = "main"
 
-#Hashtags variables
+# Hashtags variables
 hashtags_bitmask = None
 hashtags = None
 hashtags_all_pairs_similarity = None
 
-#Translations map
+# Translations map
 translations_map = {}
 
 # Vertices attributes
@@ -40,6 +40,7 @@ BALANCE_FACTOR = 0.5
 MAX_WEIGHT = 100000
 
 
+# Setup method to prepare the data, there is no need to call the methods individually
 def setup():
     global hashtags_bitmask, hashtags, hashtags_all_pairs_similarity
     hashtags_bitmask = bitmask_file_parser()
@@ -50,11 +51,14 @@ def setup():
     set_up_edges_empty_attributes(g)
     return g
 
+
+# Set to 0.0 attributes with None values
 def set_up_edges_empty_attributes(graph):
     for e in graph.es:
         for h in hashtags:
             if e[h] is None:
                 e[h] = 0.0
+
 
 # Load the graph in main memory
 def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
@@ -106,9 +110,11 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
         print "[load_graph]   Graph loaded."
     return g
 
+
 # Get node id from screen_name
 def translate(screen_name):
     return translations_map[screen_name]
+
 
 # Computes the homogeneity of the group of hashtags
 def homogeneity(hashtags_list, verbose=False):
@@ -116,12 +122,13 @@ def homogeneity(hashtags_list, verbose=False):
         print "[homogeneity]   Checking homogeneity."
     if len(hashtags) <= 1:
         return 1
-    #return 1
+    # return 1
     ht_dict = {}
     for h in hashtags_list:
         ht_dict[h] = hashtags_bitmask[h]
 
-    return 1 - (1 - graph_jaccard_similarity(ht_dict))*BALANCE_FACTOR
+    return 1 - (1 - graph_jaccard_similarity(ht_dict)) * BALANCE_FACTOR
+
 
 # Simulate the independent cascade process
 def independent_cascade_process(g, source, tweet_hashtags, verbose=False):
@@ -166,7 +173,6 @@ def independent_cascade_process(g, source, tweet_hashtags, verbose=False):
                     if g.es[e][h] > g.es[e][max]:
                         max = h
 
-
                 pr = g.es[e][max] * balance_coeff
                 if verbose:
                     print "[independent_cascade_process]     Probability of activation on the considered edge: ", pr
@@ -197,6 +203,7 @@ def independent_cascade_process(g, source, tweet_hashtags, verbose=False):
         print "[independent_cascade_process]   Done."
     return result
 
+
 # Estimate the expected outcome of an independent cascade run
 def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbose=False):
     # This is the increment each node can get from a single run,
@@ -225,7 +232,7 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbo
 
         deactivate(g)
         if verbose:
-            print "[estimate_expected_outcome]   Run ",i, " completed."
+            print "[estimate_expected_outcome]   Run ", i, " completed."
 
     # Collect results
     for v in g.vs:
@@ -239,11 +246,13 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbo
 
     return avg_number_activated
 
+
 # Retrieve the most suitable hashtags, given as input  the set of hashtags currently adopted
-def get_close_hahstags(hashtags_in, k = 5):
+def get_close_hahstags(hashtags_in, k=5):
     ranking = jaccard_top_k_similar_hashtags(hashtags_all_pairs_similarity, hashtags_in, k)
     result = [tup[1] for tup in ranking]
     return result
+
 
 # Maximize the expected outcome of an independent cascade run
 def maximize_expected_outcome(g, source, current_hashtags, runs, current_outcome, verbose=False):
@@ -279,6 +288,7 @@ def maximize_expected_outcome(g, source, current_hashtags, runs, current_outcome
 
     return outcomes
 
+
 # Retrieve the top-k hashtags according to the the vertex interests
 def most_interested_in_hashtags(g, id, k=3, tweet_hashtags=None, verbose=False):
     result = []
@@ -295,7 +305,7 @@ def most_interested_in_hashtags(g, id, k=3, tweet_hashtags=None, verbose=False):
         if tweet_hashtags is not None:
             cur_hashtags.extend(tweet_hashtags)
         cur_hashtags.append(h)
-        hmg= homogeneity(cur_hashtags)
+        hmg = homogeneity(cur_hashtags)
         if verbose:
             print "[most_interested_in_hashtags]   Homogeneity of current hashtag set: ", hmg
         for e in edges:
@@ -307,7 +317,7 @@ def most_interested_in_hashtags(g, id, k=3, tweet_hashtags=None, verbose=False):
             if verbose:
                 print "[most_interested_in_hashtags]   Edge probability on hashtag", h, ": ", edge[h]
                 print "[most_interested_in_hashtags]   Weight: ", weight
-            if  h in hashtags_weight:
+            if h in hashtags_weight:
                 hashtags_weight[h] += weight
             else:
                 hashtags_weight[h] = weight
@@ -315,13 +325,13 @@ def most_interested_in_hashtags(g, id, k=3, tweet_hashtags=None, verbose=False):
                 print "[most_interested_in_hashtags]   Updated hashtag weight: ", hashtags_weight[h]
 
     for e in hashtags_weight.keys():
-        tup = (hashtags_weight[e],e)
+        tup = (hashtags_weight[e], e)
         weighted_heap.append(tup)
 
     heapq.heapify(weighted_heap)
 
-    l = min(len(weighted_heap),k)
-    for i in range(0,l):
+    l = min(len(weighted_heap), k)
+    for i in range(0, l):
         tup = heapq.heappop(weighted_heap)
         result.append(tup[1])
 
@@ -330,6 +340,7 @@ def most_interested_in_hashtags(g, id, k=3, tweet_hashtags=None, verbose=False):
 
     return result
 
+
 # Weight edges according to the input hashtag
 def weight_edges(g, field, homogeneity=1, verbose=False):
     if verbose:
@@ -337,24 +348,16 @@ def weight_edges(g, field, homogeneity=1, verbose=False):
     for edge in g.es:
         weight = MAX_WEIGHT
         if edge.attributes().has_key(field):
-            den = (edge[field]*homogeneity)
+            den = (edge[field] * homogeneity)
             if den > 0:
                 weight = 1 / den
 
         edge[WEIGHT] = weight
         if verbose:
-            print "[weight_edges]   Edge:",edge.source, " ", edge.target, "  weights ", edge[WEIGHT]
+            print "[weight_edges]   Edge:", edge.source, " ", edge.target, "  weights ", edge[WEIGHT]
     if verbose:
         print "[weight_edges]   Done."
-    # Stub method
-    """g.es[0][WEIGHT] = 1
-    g.es[1][WEIGHT] = 3
-    g.es[2][WEIGHT] = 1
-    g.es[3][WEIGHT] = 6
-    g.es[4][WEIGHT] = 1
-    g.es[5][WEIGHT] = 1
-    g.es[6][WEIGHT] = 2
-    g.es[7][WEIGHT] = 1"""
+
 
 # Check whether the suggested side track edges can be inserted into a shortest path with no loops
 def is_straight_path(g, source, target, path, verbose=True):
@@ -399,6 +402,7 @@ def is_straight_path(g, source, target, path, verbose=True):
 
     return count == len(path)
 
+
 # Remove the edges incident to the target node and return them in a list
 def remove_incidents(g, target, verbose=True):
     if verbose:
@@ -431,6 +435,7 @@ def remove_incidents(g, target, verbose=True):
 
     return removed
 
+
 # Add edges in the list to the target node
 def add_edges(g, target, edges_list, verbose=True):
     if verbose:
@@ -457,6 +462,7 @@ def add_edges(g, target, edges_list, verbose=True):
     if verbose:
         print "[add_edges]   Done."
 
+
 # Compute the shortest paths from every node to target
 def compute_shortest_paths(g, target, weights=WEIGHT, mode=IN, verbose=True):
     if verbose:
@@ -467,6 +473,7 @@ def compute_shortest_paths(g, target, weights=WEIGHT, mode=IN, verbose=True):
             g.es[e][MAIN] = True
     if verbose:
         print "[compute_shortest_paths]   Done."
+
 
 # Reconstruct cost of shortest paths to target
 def reconstruct_paths_cost(g, target, verbose=True):
@@ -511,70 +518,53 @@ def reconstruct_paths_cost(g, target, verbose=True):
     if verbose:
         print "[reconstruct_paths_cost]   Done."
 
+
 # Compute the increment in cost of the possible paths when taking sidetrack edges
-def compute_sidetrack_edges_increment(g, verbose = True):
+def compute_sidetrack_edges_increment(g, verbose=True):
     sidetrack_edges = []
 
-    #count = 0
+    # count = 0
 
     if verbose:
         print "[compute_sidetrack_edges_increment]   Computing increment in cost of sidetrack edges.."
 
-    #costs = []
-    #heapq.heapify(costs)
+    # costs = []
+    # heapq.heapify(costs)
 
     # Can be improved
     for edge in g.es:
         if edge[MAIN] is False:
-            #count += 1
+            # count += 1
             target = g.vs[edge.target]
             if target[COST] >= MAX_WEIGHT:
                 continue
-            else :
+            else:
                 edge[INC] = edge[WEIGHT] + g.vs[edge.target][COST] - g.vs[edge.source][COST]
                 tup = (edge[INC], edge.source, edge.target)
                 sidetrack_edges.append(tup)
                 if verbose:
-                    print "[compute_sidetrack_edges_increment]   Edge: ", edge.source, " "\
-                            , edge.target, \
-                            " Side_track_cost= edge[WEIGHT] + g.vs[edge.target][COST] - g.vs[edge.source][COST] =", \
-                            edge[WEIGHT], "+", g.vs[edge.target][COST], "-", g.vs[edge.source][COST], "=", \
-                            edge[INC]
-            """if count <= k - 1:
-                heapq.heappush(costs,(1.0/edge[INC]))
-                tup = (edge[INC], edge.source, edge.target)
-                sidetrack_edges.append(tup)
-            if count > k - 1:
-                max = heapq.heappop(costs)
-                cur = 1.0/edge[INC]
-                if cur >= max:
-                    tup = (edge[INC], edge.source, edge.target)
-                    sidetrack_edges.append(tup)
-                    heapq.heappush(costs, cur)
-                else:
-                    heapq.heappush(costs, max)"""
-
+                    print "[compute_sidetrack_edges_increment]   Edge: ", edge.source, " " \
+                        , edge.target, \
+                        " Side_track_cost= edge[WEIGHT] + g.vs[edge.target][COST] - g.vs[edge.source][COST] =", \
+                        edge[WEIGHT], "+", g.vs[edge.target][COST], "-", g.vs[edge.source][COST], "=", \
+                        edge[INC]
     if verbose:
         print "[compute_sidetrack_edges_increment]   Ordering sidetrack edges.."
 
     heapq.heapify(sidetrack_edges)
-    """ordered_s_e = []
-
-    for i in range(0,k):
-        el = heapq.heappop(sidetrack_edges)
-        ordered_s_e.append(el)"""
 
     if verbose:
         print "[compute_sidetrack_edges_increment]   Done."
 
-    #return ordered_s_e
+    # return ordered_s_e
     return sidetrack_edges
 
-# TODO
+
 # TOTEST
+# Compute k least cost simple paths from source to target
 def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     # Need first to remove outgoing edges from target, edges will be restored at the end of the computation
-    removed = remove_incidents(g, target)
+    removed = remove_incidents(g, target, verbose=verbose)
 
     if verbose:
         print "[get_k_shortest_paths]   Computing ", k, "-least cost paths.."
@@ -583,7 +573,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
 
     compute_shortest_paths(g, target, verbose=verbose)
 
-    reconstruct_paths_cost(g,target)
+    reconstruct_paths_cost(g, target, verbose=verbose)
 
     deactivate(g, verbose=False)
 
@@ -593,7 +583,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     if verbose:
         print "[get_k_shortest_paths]   Computing side edges increment in cost.."
 
-    sidetrack_edges = compute_sidetrack_edges_increment(g)
+    sidetrack_edges = compute_sidetrack_edges_increment(g, verbose=verbose)
 
     if verbose:
         print "[get_k_shortest_paths]   Done."
@@ -602,6 +592,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     ordered_s_e = []
     # The least cost path is already known
     candidates_found = 1
+    upper_bound = 0
     while len(sidetrack_edges) > 0 & candidates_found < k:
         p = []
         tup = heapq.heappop(sidetrack_edges)
@@ -609,31 +600,36 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
         if is_straight_path(g, source, target, p, verbose=False):
             ordered_s_e.append(tup)
             candidates_found += 1
+            upper_bound = tup[0]
 
-    #Update the number of paths
+    # Update the number of paths
     k = candidates_found
 
-    # TODO
     candidate_paths = []
+    paths = []
     s = ()
     tup = (OPT, s)
-    paths = []
     heapq.heapify(paths)
     heapq.heappush(paths, tup)
 
-    if len(ordered_s_e) == 0:
+    if k == 1:
         return paths
-
-    # Surely any of the k-top paths cannot cost more than this value
-    t  = ordered_s_e.pop()
-    upper_bound = t[0]
-    ordered_s_e.append(t)
 
     for l in range(1, k - 1):
         for tup in itertools.combinations(ordered_s_e, l):
-            candidate_paths.append(tup)
-            if verbose:
-                print "[get_k_shortest_paths]   Tuple: ", tup
+            candidate_cost = 0
+            for edge in tup:
+                candidate_cost += edge[0]
+            # Check if path might be in the k-least cost paths
+            if candidate_cost <= upper_bound:
+                candidate_paths.append(tup)
+                if verbose:
+                    print "[get_k_shortest_paths]   Tuple: ", tup
+                    print "[get_k_shortest_paths]   Cost: ", candidate_cost
+            else:
+                if verbose:
+                    print "[get_k_shortest_paths]   Path too expensive, discarded."
+                    print "[get_k_shortest_paths]   Cost: ", candidate_cost
 
     # Can be improved
     for p in candidate_paths:
@@ -641,11 +637,9 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
         for t in p:
             cost += t[0]
 
-        # Check if path might be in the k-least cost paths
-        if cost <= upper_bound:
-            if is_straight_path(source, target, p):
-                tup = (cost + OPT, p)
-                heapq.heappush(paths, tup)
+        if is_straight_path(source, target, p):
+            tup = (cost + OPT, p)
+            heapq.heappush(paths, tup)
 
     if verbose:
         for p in paths:
@@ -659,33 +653,44 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
 
     heapq.heapify(result)
 
-    add_edges(g,target,removed)
+    add_edges(g, target, removed)
 
     return total
 
+
 # TOTEST
-# TARGET MAXIMIZATION HEURISTIC
-def maximize_target_outcome(g, source, target, tweet_hashtags, outcomes, k=1):
-    pref_hashtags = []
-    most_interested_in_hashtags(g, target, k, pref_hashtags)
-    for i in range(0, k):
-        h = heapq.heappop(pref_hashtags)
-        if h is None:
+# Maximizie the probabiity of reaching target node
+def maximize_target_outcome(g, source, target, tweet_hashtags, k=5, verbose=True):
+    outcomes = []
+    if verbose:
+        print "[maximize_target_outcome]   Maximizing outcome on node: ", target
+    pref_hashtags = most_interested_in_hashtags(g, target, k, tweet_hashtags, verbose=verbose)
+    count = 0
+    if verbose:
+        print "[maximize_target_outcome]   Computing score for the k most favourite hashtags"
+    for h in pref_hashtags:
+        if count == k:
             break
+        count += 1
+        if verbose:
+            print "[maximize_target_outcome]   Hashtag: ", h
 
         cur_hashtags = []
         cur_hashtags.extend(tweet_hashtags)
         cur_hashtags.append(h)
 
-        homogeneity = homogeneity(cur_hashtags)
+        homogeneity = homogeneity(cur_hashtags, verbose=verbose)
 
-        weight_edges(g, h, homogeneity)
-        result = []
-        tot = get_k_shortest_paths(g, source, target, result, weight=h)
-        outcomes.append(tot, result)
-
+        weight_edges(g, h, homogeneity, verbose=verbose)
+        outcome = []
+        tot = get_k_shortest_paths(g, source, target, outcome, k, verbose=verbose)
+        outcomes.append(tot, outcome)
+        if verbose:
+            print "[maximize_target_outcome]   Outcome: ", (tot,outcome)
     heapq.heapify(outcomes)
-
+    if verbose:
+        print "[maximize_target_outcome]   Done."
+    return outcomes
 
 # UTILS
 
@@ -738,18 +743,18 @@ if __name__ == "__main__":
     #
     g = setup()
     # print hashtags[2], hashtags[1]
-    #print most_interested_in_hashtags(g,7)
+    # print most_interested_in_hashtags(g,7)
     cur_outcome = []
-    n = estimate_expected_outcome(g, 0,[hashtags[2], hashtags[1]], 5, cur_outcome)
+    n = estimate_expected_outcome(g, 0, [hashtags[2], hashtags[1]], 5, cur_outcome)
     print n
     print cur_outcome
-    result = maximize_expected_outcome(g,0,[hashtags[2], hashtags[1]] , 5, cur_outcome)
+    result = maximize_expected_outcome(g, 0, [hashtags[2], hashtags[1]], 5, cur_outcome)
     print result
     print translate("matteosalvinimi")
     # r = g.get_shortest_paths(0,4)
     # print r
 
-     #print get_close_hahstags([hashtags[2], hashtags[1]])
+    # print get_close_hahstags([hashtags[2], hashtags[1]])
     '''print [hashtags[0],hashtags[1]]
     result = []
     print "Average number of nodes activated: ", \
@@ -761,8 +766,8 @@ if __name__ == "__main__":
     print "Edges:"
     for e in g.es:
         print e.source, e.target, e'''
-    #weight_edges(g, "sale")
-    #get_k_shortest_paths(g, 0, 4, [],1)
+    # weight_edges(g, "sale")
+    # get_k_shortest_paths(g, 0, 4, [],1)
 
     # result = []
     # estimate_expected_outcome(g,0,["acqua"],50,result)
