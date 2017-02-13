@@ -1,5 +1,5 @@
 
-def compare_positivity(v1, v2):
+def difference(v1, v2):
     p = 0.0
     #Assumes they have the same length
     n = len(v1)

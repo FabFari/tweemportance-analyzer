@@ -5,20 +5,25 @@ import itertools
 from collections import deque
 from igraph import *
 from translate.lang.ja import ja
-from utils.graph_jaccard_similarity import graph_jaccard_similarity
-from utils.vector_utils import compare_positivity
+from utils.graph_jaccard_similarity import graph_jaccard_similarity, bitmask_file_parser, \
+    jaccard_all_pairs_similarity_file_parser, jaccard_top_k_similar_hashtags
+from utils.vector_utils import difference
 
 # File Names
-GRAPH_FILE = "test_weight_1.tsv"
+GRAPH_FILE = "final_graph.tsv"
 TRANSLATION_FILE = "ID_translation.tsv"
+DATA = "data"
+GRAPH_DIR = "graph"
 
 # Edges attributes
 WEIGHT = "weight"
 INC = "increase"
 MAIN = "main"
-# TODO
-# Collection of all the hashtags
-HASHTAGS = ["acqua", "sale"]
+
+#Hashtags variables
+hashtags_bitmask = None
+hashtags = None
+hashtags_all_pairs_similarity = None
 
 # Vertices attributes
 ACTIVE = "active"
@@ -27,15 +32,29 @@ COST = "cost"
 
 # Others
 # Factor used to weight the jaccard similarity of hashtags
-BALANCE_FACTOR = 1
+BALANCE_FACTOR = 0.5
 # Max possible weight
 MAX_WEIGHT = 100000
-# Hashtags file
-HASHTAGS_FILE = "hashtags_bitmasks.tsv"
 
+
+def setup():
+    global hashtags_bitmask, hashtags, hashtags_all_pairs_similarity
+    hashtags_bitmask = bitmask_file_parser()
+    hashtags = hashtags_bitmask.keys()
+    hashtags_all_pairs_similarity = jaccard_all_pairs_similarity_file_parser()
+    path = os.path.join(os.pardir, DATA, GRAPH_DIR)
+    g = load_graph(os.path.join(path, GRAPH_FILE), os.path.join(path, TRANSLATION_FILE))
+    set_up_edges_empty_attributes(g)
+    return g
+
+def set_up_edges_empty_attributes(graph):
+    for e in graph.es:
+        for h in hashtags:
+            if e[h] is None:
+                e[h] = 0.0
 
 # Load the graph in main memory
-def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=True):
+def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
     if verbose:
         print "[load_graph]   Loading  graph.."
 
@@ -84,20 +103,23 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=True):
         print "[load_graph]   Graph loaded."
     return g
 
-# TOTEST
-# TODO
 # Computes the homogeneity of the group of hashtags
-def homogeneity(hashtags, verbose=True):
+def homogeneity(hashtags_list, verbose=False):
     if verbose:
         print "[homogeneity]   Checking homogeneity."
     if len(hashtags) <= 1:
         return 1
-    return 1
-    # return 1 - (1 -graph_jaccard_similarity(hashtags))*BALANCE_FACTOR
+    #return 1
+    ht_dict = {}
+    for h in hashtags_list:
+        ht_dict[h] = hashtags_bitmask[h]
+
+    return 1 - (1 - graph_jaccard_similarity(ht_dict))*BALANCE_FACTOR
 
 # Simulate the independent cascade process
-def independent_cascade_process(g, source, hashtags, result, verbose=True):
-    balance_coeff = homogeneity(hashtags)
+def independent_cascade_process(g, source, tweet_hashtags, verbose=False):
+    result = []
+    balance_coeff = homogeneity(tweet_hashtags)
 
     # Stack containing the nodes activated in the previous iteration
     # First iteration has only the source node
@@ -131,11 +153,12 @@ def independent_cascade_process(g, source, hashtags, result, verbose=True):
                 # We consider only the hastag parameter that maximizes the probability,
                 # this probability will then adjusted according to the jaccard similarity of the hashtags.
                 # The Jaccard similarity is an indicator of how close the hashtags are.
-                max = hashtags[0]
+                max = tweet_hashtags[0]
 
-                for h in hashtags[1:]:
+                for h in tweet_hashtags[1:]:
                     if g.es[e][h] > g.es[e][max]:
                         max = h
+
 
                 pr = g.es[e][max] * balance_coeff
                 if verbose:
@@ -165,9 +188,10 @@ def independent_cascade_process(g, source, hashtags, result, verbose=True):
     if verbose:
         print "[independent_cascade_process]   ------------------------------------------------------"
         print "[independent_cascade_process]   Done."
+    return result
 
 # Estimate the expected outcome of an independent cascade run
-def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbose=True):
+def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbose=False):
     # This is the increment each node can get from a single run,
     # At the end, the number of increments received will be an estimation of the
     # probability of the node being activated.
@@ -175,7 +199,7 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbo
     # This value can be used also to average the number of nodes activated in the different runs of the process
     inc = 1.0 / runs
 
-    avg_acts = 0
+    avg_number_activated = 0
 
     if verbose:
         print "[estimate_expected_outcome]   Computing Independent Cascade Process expected outcome.."
@@ -185,13 +209,12 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbo
         if verbose:
             print "[estimate_expected_outcome]   Starting run ", i
         activations = 0
-        result = []
-        independent_cascade_process(g, source, hashtags, result)
+        result = independent_cascade_process(g, source, hashtags)
         for i in result:
             activations += 1
             g.vs[i][EXPECTED_VALUE] += inc
 
-        avg_acts += activations * inc
+        avg_number_activated += activations * inc
 
         deactivate(g)
         if verbose:
@@ -207,38 +230,39 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbo
     if verbose:
         print "[estimate_expected_outcome]   Done."
 
-    return avg_acts
+    return avg_number_activated
 
-# TOTEST
-# TODO
 # Retrieve the most suitable hashtags, given as input  the set of hashtags currently adopted
-def get_close_hahstags(hashtags_in, hashtags_out):
-    hashtags_out.append("sale")
+def get_close_hahstags(hashtags_in, k = 5):
+    ranking = jaccard_top_k_similar_hashtags(hashtags_all_pairs_similarity, hashtags_in, k)
+    result = [tup[1] for tup in ranking]
+    return result
 
-# TOTEST
 # Maximize the expected outcome of an independent cascade run
-def maximize_expected_outcome(g, source, hashtags, runs, current_outcome, outcomes, verbose=True):
+def maximize_expected_outcome(g, source, current_hashtags, runs, current_outcome, verbose=True):
+    outcomes = {}
     if verbose:
         print "[maximize_expected_outcome]   Maximizing expected outcome.."
 
     if verbose:
         print "[maximize_expected_outcome]   Retrieving most suitable hashtags.."
-    suggested_hashtags = []
-    get_close_hahstags(hashtags, suggested_hashtags)
+    suggested_hashtags = get_close_hahstags(current_hashtags)
     if verbose:
-        print "[maximize_expected_outcome]   Hashatags retrieved."
+        print "[maximize_expected_outcome]   Hashtags retrieved."
 
     if verbose:
         print  "[maximize_expected_outcome]   Starting simulations.."
 
     for h in suggested_hashtags:
         current_hashtags = []
-        current_hashtags.extend(hashtags)
+        current_hashtags.extend(current_hashtags)
         current_hashtags.append(h)
 
         outcome = []
         n = estimate_expected_outcome(g, source, current_hashtags, runs, outcome)
-        positivity = compare_positivity(outcome, current_outcome)
+        positivity = difference(outcome, current_outcome)
+        if verbose:
+            print "[maximize_expected_outcome]   Hashtag: ", h, " positivity: ", positivity
         if positivity >= 0:
             tup = (n, positivity)
             outcomes[h] = tup
@@ -246,47 +270,51 @@ def maximize_expected_outcome(g, source, hashtags, runs, current_outcome, outcom
     if verbose:
         print "[maximize_expected_outcome]   Done."
 
-    if verbose:
-        print "[maximize_expected_outcome]   Done."
+    return outcomes
 
 # TOTEST
 # Retrieve the top-k hashtags according to the the vertex interests
-def most_interested_in_hashtags(g, id, k, result, hashtags=None):
+def most_interested_in_hashtags(g, id, k=3, tweet_hashtags=None, verbose=False):
+    result = []
+    weighted_heap = []
 
-    w_heap = []
-
-    dict = {}
-
-    # Assume id already translated
+    hashtags_weight = {}
     edges = g.incident(id)
-
-    for h in HASHTAGS:
+    if verbose:
+        print "[most_interested_in_hashtags]   Retrieve top k hashtags according to vertex interests.."
+    for h in hashtags:
         cur_hashtags = []
-        cur_hashtags.extend(hashtags)
+        if tweet_hashtags is not None:
+            cur_hashtags.extend(tweet_hashtags)
         cur_hashtags.append(h)
-        homogeneity = homogeneity(cur_hashtags)
+        hmg= homogeneity(cur_hashtags)
         for e in edges:
             edge = g.es[e]
-            if edge.hasKey(h):
-                weight = 1 / (edge[h] * homogeneity())
-                if  dict.has_key(h):
-                    dict[h] += weight
-                else:
-                    dict[h] = weight
+            if edge[h] > 0:
+                weight = 1 / (edge[h] * hmg)
+            else:
+                weight = MAX_WEIGHT
 
-    for key in dict.keys():
-        tup = (dict[key],key)
-        w_heap.append(tup)
+            if  h in hashtags_weight:
+                hashtags_weight[h] += weight
+            else:
+                hashtags_weight[h] = weight
 
-    heapq.heapify(w_heap)
+    for e in hashtags_weight.keys():
+        tup = (hashtags_weight[e],e)
+        weighted_heap.append(tup)
 
-    l = k
-    if len(w_heap) < k:
-        l = len(w_heap)
+    heapq.heapify(weighted_heap)
 
+    l = min(len(weighted_heap),k)
     for i in range(0,l):
-        tup = heapq.heappop(w_heap)
+        tup = heapq.heappop(weighted_heap)
         result.append(tup[1])
+
+    if verbose:
+        print "[most_interested_in_hashtags]   Done."
+
+    return result
 
 # Weight edges according to the input hashtag
 def weight_edges(g, field, homogeneity=1, verbose=False):
@@ -374,7 +402,7 @@ def remove_incidents(g, target, verbose=True):
         dict[MAIN] = edge[MAIN]
         dict[WEIGHT] = edge[WEIGHT]
         dict[INC] = edge[INC]
-        for h in HASHTAGS:
+        for h in hashtags:
             dict[h] = edge[h]
 
         # Save the dictionary
@@ -528,6 +556,7 @@ def compute_sidetrack_edges_increment(g, verbose = True):
     #return ordered_s_e
     return sidetrack_edges
 
+# TODO
 # TOTEST
 def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     # Need first to remove outgoing edges from target, edges will be restored at the end of the computation
@@ -693,12 +722,31 @@ def reset_graph(g, verbose=False):
 
 if __name__ == "__main__":
     #
-    g = load_graph(GRAPH_FILE, TRANSLATION_FILE)
+    g = setup()
+    # print hashtags[2], hashtags[1]
+    print most_interested_in_hashtags(g,5)
+    '''cur_outcome = []
+    n = estimate_expected_outcome(g, 0,[hashtags[2], hashtags[1]], 5, cur_outcome)
+    print n
+    result = maximize_expected_outcome(g,0,[hashtags[2], hashtags[1]] , 5, cur_outcome)
+    print result'''
     # r = g.get_shortest_paths(0,4)
     # print r
-    # print g
-    weight_edges(g, "sale")
-    get_k_shortest_paths(g, 0, 4, [],1)
+
+     #print get_close_hahstags([hashtags[2], hashtags[1]])
+    '''print [hashtags[0],hashtags[1]]
+    result = []
+    print "Average number of nodes activated: ", \
+
+    print result
+    print "Nodes:"
+    for n in g.vs:
+        print n
+    print "Edges:"
+    for e in g.es:
+        print e.source, e.target, e'''
+    #weight_edges(g, "sale")
+    #get_k_shortest_paths(g, 0, 4, [],1)
 
     # result = []
     # estimate_expected_outcome(g,0,["acqua"],50,result)
