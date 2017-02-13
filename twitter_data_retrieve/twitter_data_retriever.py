@@ -4,8 +4,9 @@ import time
 import tweepy
 
 from tweepy import *
+from time import gmtime, strftime
 
-SOURCE = "BissoliAn"#"matteosalvinimi" # "VittorioSgarbi"#
+SOURCE = "matteosalvinimi" ## "BissoliAn"# "VittorioSgarbi"#
 FILE_TWEETS = "tweets.txt"
 FILE_REPLIES = "replies.txt"
 DATA_DIRECTORY = "data/"
@@ -14,26 +15,29 @@ PEOPLE_DIRECTORY = "people/"
 PEOPLE_VISITED = "people_visited.txt"
 REPLIES_SOURCE = "replies_salvini.txt"
 
-NUM_TWEETS = 1
+NUM_TWEETS = 100
 TIME_TO_SLEEP = 960
 
-access_token = "815961135321059330-7i5Mh5wC2q6WNJJiJMrlqD6k3m9DRMm"
-access_token_secret = "9yDVE9SlD1qwHNPcew3mxTysYgU7onmEVmFvpnWsKr844"
-consumer_key = "kZEJIcJ5t9FNGWhMEkm8WyEV7"
-consumer_secret = "oIsyfHv8wbxsHcmvMXAOLkv4HzuoR09ii1fANUHXMnO8JEVfmn"
+consumer_key2 = 'gPs0nRfmeRjGoe58RubIYmYPv'
+consumer_secret2 = 'JQS8MVRW9ANfZQkQp3XzUpLfX7xm0pP9CTTHnzgsFRYNptWOlY'
+access_token2 = '142039948-8BdKP6uleeAJQTtPMsSxmno2YB3sf62ZN8Ab5NrA'
+access_token_secret2 = 'o5iP8GtpTOsBiiHyKKuPpKDjdeXRwrJut7hDkFxywXWfG'
 
-'''
+access_token1 = "815961135321059330-7i5Mh5wC2q6WNJJiJMrlqD6k3m9DRMm"
+access_token_secret1 = "9yDVE9SlD1qwHNPcew3mxTysYgU7onmEVmFvpnWsKr844"
+consumer_key1 = "kZEJIcJ5t9FNGWhMEkm8WyEV7"
+consumer_secret1 = "oIsyfHv8wbxsHcmvMXAOLkv4HzuoR09ii1fANUHXMnO8JEVfmn"
+
+
 access_token = '2341848095-rFwC9RZJceJGUvAsTEUivc8Hq6mdaHBGoFlNo44'
 access_token_secret = 'xFCaYxcGjN2X4aVCXu3cV0U8spIAiiVgwabygVfFkmIbU'
 consumer_key = 'tZRi2DVFSeEl4K77R2yNLE8aQ'
 consumer_secret = 'Wnewl8PFjgBC9QlIimLpirYvdPvrvE9Mx4vEOeCvFPeuQr9s5G'
-'''
 
 
-
-def setup():
-    auth = OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
+def setup(at, ats, ck, cs):
+    auth = OAuthHandler(ck, cs)
+    auth.set_access_token(at, ats)
 
     data_path = os.path.join(os.pardir, DATA_DIRECTORY)
     if not os.path.exists(data_path):
@@ -216,6 +220,7 @@ def get_graph_data(verbose=True):
             # dal file che abbiamo leggiamo le persone che abbiamo visitato fino a questo momento
             people_visited.add(r.strip("\n"))
 
+    try_keys = 0;
     while not visited_all_nodes:
         if verbose:
             print "<----------------------------------------------------------------------------------------------------->"
@@ -248,7 +253,10 @@ def get_graph_data(verbose=True):
                 print "Current person: ", name
 
             # prendiamo tutte le risposte rivolte a name
-            ret = get_replies(screen_name=name, max_replies=10)
+            if name == SOURCE:
+                ret = get_replies(screen_name=name)
+            else:
+                ret = get_replies(screen_name=name, max_replies=100)
             print "ret: ", ret
 
             if ret != -1 or name == SOURCE:
@@ -263,10 +271,38 @@ def get_graph_data(verbose=True):
             else:
                 # Reinsert the person in the set
                 people.add(name)
-                if verbose:
-                    print "We will try again in 16 minutes, Everything comes to him who waits.."
-                # c e stato un errore, Twitter mi ha cacciato, aspettiamo e rifacciamo
-                time.sleep(TIME_TO_SLEEP)
+
+                # Reinsert the person in the set
+                people.add(name)
+
+                if try_keys == 0:
+                    print "provo con (access_token1, access_token_secret1, consumer_key1, consumer_secret1)"
+                    setup(access_token1, access_token_secret1, consumer_key1, consumer_secret1)
+                    try_keys = 1
+
+                elif try_keys == 1:
+                    print "provo con (access_token2, access_token_secret2, consumer_key2, consumer_secret2)"
+                    setup(access_token2, access_token_secret2, consumer_key2, consumer_secret2)
+                    try_keys = 2
+
+                elif try_keys == 2:# riprovo a fare il giro
+                    print "provo con (access_token, access_token_secret, consumer_key, consumer_secret)"
+                    setup(access_token, access_token_secret, consumer_key, consumer_secret)
+                    try_keys = 3
+
+                elif try_keys == 3:
+                    print "provo con (access_token, access_token_secret, consumer_key, consumer_secret)"
+                    setup(access_token, access_token_secret, consumer_key, consumer_secret)
+                    try_keys = 0
+                    if verbose:
+                        print "We will try again in 8 minutes, Everything comes to him who waits..",strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                        print TIME_TO_SLEEP/2
+
+                    # se tutte e due le chiavi non vanno allora e necessario aspettare, Twitter mi ha cacciato, aspettiamo e rifacciamo
+                    time.sleep(TIME_TO_SLEEP/2)
+                    if verbose:
+                        print "8 minutes left",strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                    time.sleep(TIME_TO_SLEEP/2)
 
             if verbose:
                 print "People so far visited: ", people_visited
@@ -282,7 +318,7 @@ def get_dir_people(verbose=True):
 
 
 if __name__ == "__main__":
-    api = setup()
-    get_source_tweets(api)
-    generate_tweets_file()
+    api = setup(access_token, access_token_secret, consumer_key, consumer_secret)
+    # get_source_tweets(api)
+    # generate_tweets_file()
     get_graph_data()
