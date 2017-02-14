@@ -711,7 +711,6 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     return total
 
 
-# TOTEST
 # Maximize the probability of reaching target node
 def maximize_target_outcome(g, source, target, tweet_hashtags=[], k=5, verbose=True):
     outcomes = []
