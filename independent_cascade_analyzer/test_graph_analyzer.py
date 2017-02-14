@@ -86,10 +86,21 @@ def test_compute_sidetrack_edges_increment():
         print "[test_compute_k_sidetrack_edges]   ",e
 
 
+def test_get_k_shortest_paths():
+    g = graph_analyzer.load_graph("k_paths_test_graph.tsv")
+    graph_analyzer.weight_edges(g, "#A")
+    # for e in g.es:
+    #    print e.source, e.target
+    #    print e
+    result = []
+    tot =  graph_analyzer.get_k_shortest_paths(g,0,5, result, k=3)
+    print result
+    print tot
 
 if __name__ == "__main__":
     print "Testing.."
     #is_path_all_tests()
     #test_reconstruct_paths_cost()
-    test_compute_sidetrack_edges_increment()
+    #test_compute_sidetrack_edges_increment()
+    test_get_k_shortest_paths()
     print "Done."

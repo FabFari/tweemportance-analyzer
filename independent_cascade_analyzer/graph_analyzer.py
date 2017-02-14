@@ -22,7 +22,7 @@ MAIN = "main"
 
 # Hashtags variables
 hashtags_bitmask = None
-hashtags = None
+hashtags = ["#A"]#= None
 hashtags_all_pairs_similarity = None
 
 # Translations map
@@ -347,7 +347,7 @@ def weight_edges(g, field, homogeneity=1, verbose=False):
         print "[weight_edges]   Weighting edges.."
     for edge in g.es:
         weight = MAX_WEIGHT
-        if edge.attributes().has_key(field):
+        if field in edge.attributes():
             den = (edge[field] * homogeneity)
             if den > 0:
                 weight = 1 / den
@@ -358,9 +358,9 @@ def weight_edges(g, field, homogeneity=1, verbose=False):
     if verbose:
         print "[weight_edges]   Done."
 
-
 # Check whether the suggested side track edges can be inserted into a shortest path with no loops
 def is_straight_path(g, source, target, path, verbose=True):
+    deactivate(g, verbose=verbose)
     d_path = {}
     count = 0
 
@@ -369,6 +369,31 @@ def is_straight_path(g, source, target, path, verbose=True):
     for t in path:
         key = int(t[1])
         d_path[key] = int(t[2])
+
+    if len(path) == 0:
+        if verbose:
+            print "[is_path]   Done."
+        return False
+
+    '''if len(path) == 1:
+        if verbose:
+            print "[is_path]   Done."
+        if path[0][1] == target:
+            if verbose:
+                print "[is_path] Result:", False
+            return False
+        n = path[0][1]
+        edges = g.incident(n)
+        for e in edges:
+            if g.es[e][MAIN] == True:
+                if verbose:
+                    print "[is_path] Result:", True
+                return True
+        if verbose:
+            print "[is_path] Result:", False
+        return False'''
+
+
 
     if verbose:
         print "[is_path]   Edges: ", d_path
@@ -399,9 +424,24 @@ def is_straight_path(g, source, target, path, verbose=True):
 
     if verbose:
         print "[is_path]   Done."
-
+        print "[is_path]   Result: ", count == len(path)
     return count == len(path)
 
+# Check whether the current node belongs to the inverse Shortest Paths Tree
+def is_valid_edge(g, node, verbose=False):
+    if verbose:
+        print "[is_valid_edge]   Checking if node:", node, " belongs to the Shortest Paths Tree.."
+    edges = g.incident(g.vs[node])
+    for e in edges:
+        if g.es[e][MAIN] is True:
+            if verbose:
+                print "[is_valid_edge]   Done."
+                print "[is_valid_edge]   Result:",True
+            return True
+    if verbose:
+        print "[is_valid_edge]   Done."
+        print "[is_valid_edge]   Result:", False
+    return False
 
 # Remove the edges incident to the target node and return them in a list
 def remove_incidents(g, target, verbose=True):
@@ -560,7 +600,6 @@ def compute_sidetrack_edges_increment(g, verbose=True):
     return sidetrack_edges
 
 
-# TOTEST
 # Compute k least cost simple paths from source to target
 def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     # Need first to remove outgoing edges from target, edges will be restored at the end of the computation
@@ -592,18 +631,20 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     ordered_s_e = []
     # The least cost path is already known
     candidates_found = 1
-    upper_bound = 0
     while len(sidetrack_edges) > 0 & candidates_found < k:
         p = []
         tup = heapq.heappop(sidetrack_edges)
         p.append(tup)
-        if is_straight_path(g, source, target, p, verbose=False):
+        if is_valid_edge(g, tup[1], verbose=verbose):
             ordered_s_e.append(tup)
             candidates_found += 1
-            upper_bound = tup[0]
 
     # Update the number of paths
-    k = candidates_found
+    k = min(k,candidates_found)
+
+    if verbose:
+        print "[get_k_shortest_paths]   Done."
+        print "[get_k_shortest_paths]   Computing paths.."
 
     candidate_paths = []
     paths = []
@@ -613,35 +654,41 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     heapq.heappush(paths, tup)
 
     if k == 1:
-        return paths
+        result.extend(paths)
+        return OPT
 
-    for l in range(1, k - 1):
+    for l in range(1, k):
         for tup in itertools.combinations(ordered_s_e, l):
             candidate_cost = 0
             for edge in tup:
                 candidate_cost += edge[0]
             # Check if path might be in the k-least cost paths
-            if candidate_cost <= upper_bound:
-                candidate_paths.append(tup)
-                if verbose:
-                    print "[get_k_shortest_paths]   Tuple: ", tup
-                    print "[get_k_shortest_paths]   Cost: ", candidate_cost
-            else:
-                if verbose:
-                    print "[get_k_shortest_paths]   Path too expensive, discarded."
-                    print "[get_k_shortest_paths]   Cost: ", candidate_cost
+            candidate_paths.append(tup)
+            if verbose:
+                print "[get_k_shortest_paths]   Tuple: ", tup
+                print "[get_k_shortest_paths]   Cost: ", candidate_cost
 
+    if verbose:
+        print "[get_k_shortest_paths]   Candidates: ", candidate_paths
     # Can be improved
     for p in candidate_paths:
         cost = 0
+        if verbose:
+            print "[get_k_shortest_paths]   Examinating path: ", p
         for t in p:
             cost += t[0]
 
-        if is_straight_path(source, target, p):
+        if is_straight_path(g, source, target, p):
+            if verbose:
+                print "[get_k_shortest_paths]   Path is valid: ", p
             tup = (cost + OPT, p)
             heapq.heappush(paths, tup)
-
+        else:
+            if verbose:
+                print "[get_k_shortest_paths]   Path is NOT valid: ", p
     if verbose:
+        print "[get_k_shortest_paths]   Done."
+        print "[get_k_shortest_paths]   Result:"
         for p in paths:
             print "[get_k_shortest_paths]   Path: ", p
 
@@ -659,7 +706,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
 
 
 # TOTEST
-# Maximizie the probability of reaching target node
+# Maximize the probability of reaching target node
 def maximize_target_outcome(g, source, target, tweet_hashtags, k=5, verbose=True):
     outcomes = []
     if verbose:
@@ -741,10 +788,10 @@ def reset_graph(g, verbose=False):
 
 if __name__ == "__main__":
     #
-    g = setup()
+    # g = setup()
     # print hashtags[2], hashtags[1]
     # print most_interested_in_hashtags(g,7)
-    cur_outcome = []
+    '''cur_outcome = []
     n = estimate_expected_outcome(g, 0, [hashtags[2], hashtags[1]], 5, cur_outcome)
     print n
     print cur_outcome
@@ -752,7 +799,9 @@ if __name__ == "__main__":
     print result
     print translate("matteosalvinimi")
     # r = g.get_shortest_paths(0,4)
-    # print r
+    # print r'''
+    g = load_graph("k_paths_test_graph.tsv")
+    print g
 
     # print get_close_hahstags([hashtags[2], hashtags[1]])
     '''print [hashtags[0],hashtags[1]]
