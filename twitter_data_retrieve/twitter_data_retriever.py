@@ -324,8 +324,8 @@ def get_dir_people(verbose=True):
 
 if __name__ == "__main__":
     # api = setup(access_token, access_token_secret, consumer_key, consumer_secret)
-    api = setup(access_token1, access_token_secret1, consumer_key1, consumer_secret1)
-    # api = setup(access_token2, access_token_secret2, consumer_key2, consumer_secret2)
+    # api = setup(access_token1, access_token_secret1, consumer_key1, consumer_secret1)
+    api = setup(access_token2, access_token_secret2, consumer_key2, consumer_secret2)
     # get_source_tweets(api)
     # generate_tweets_file()
     get_graph_data(api)

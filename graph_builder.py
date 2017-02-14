@@ -40,6 +40,9 @@ def tweet_parser(filename, hashtags_map=None, hashtags_bitmask=None, graph_id=No
         print "hashtags:", hashtags
 
     line = f.readline()
+    if len(line) <= 0:
+        return None, None
+
     while len(line) > 0:
         edge = line.strip("\n").split("\t")
 
@@ -165,9 +168,13 @@ def final_graph_builder():
 
     filenames = os.listdir(os.path.join(DATA, PEOPLE, SOURCE_LABEL))
 
+    empty_tweet = 0
     for filename in filenames:
         graph, hashtags = tweet_parser(filename=filename, hashtags_map=hashtags_map,
                                        hashtags_bitmask=ht_bitmasks, graph_id=index)
+        if graph is None:
+            empty_tweet += 1
+            continue
         graphs_map[filename] = (graph, hashtags)
         name_to_index_dict[index] = filename
         index += 1
@@ -181,6 +188,9 @@ def final_graph_builder():
     # nodes_counters = defaultdict(lambda: defaultdict(lambda: 0))
     edges_counters = defaultdict(lambda: defaultdict(lambda: 0))
     hashtags_counters = defaultdict(lambda: 0)
+
+    # print "Keys: "
+    # print hashtags_map.keys()
 
     for h in hashtags_map.keys():
         hashtags_counters[h] = len(hashtags_map[h])
@@ -199,6 +209,8 @@ def final_graph_builder():
             final_graph[edge][edge_ht] = float(edges_counters[edge][edge_ht]) / float(hashtags_counters[edge_ht])
 
     graph_file_writer(final_graph)
+
+    print "empty_tweet: ",empty_tweet
 
 
 if __name__ == "__main__":

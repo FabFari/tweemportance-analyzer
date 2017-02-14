@@ -6,10 +6,9 @@ from collections import defaultdict
 from BitVector import BitVector
 
 SOURCE_LABEL = "matteosalvinimi"
-DATA = "data"
-PEOPLE = "people"
+DATA = "data1"
+PEOPLE = "people1"
 FINAL_GRAPH = "graph"
-NUM_TWEETS = 100
 
 
 # G = {'N1': ['N2',..., 'Nl'], ..., 'Nm': ['N3',..., 'Nn']}
@@ -37,7 +36,11 @@ def bitmask_file_parser(filename="hashtags_bitmasks.tsv"):
 
 # J(A, B) = |A *intersect* B| / |A *union* B|
 # H = [{'N1': BitVector1, ..., 'Nm': BitVectorm}, ...]
-def graph_jaccard_similarity(hashtags, mask_size=NUM_TWEETS):
+def graph_jaccard_similarity(hashtags, mask_size=None):
+
+    if mask_size is None:
+        mask_size = len(hashtags.values()[0])
+
     union_bitmask = BitVector(intVal=0, size=mask_size)
     intersec_bitmask = ~BitVector(intVal=0, size=mask_size)
 

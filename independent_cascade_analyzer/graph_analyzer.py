@@ -1,18 +1,18 @@
 import csv
 import heapq
+import os
 import random
 import itertools
 from collections import deque
 from igraph import *
-from translate.lang.ja import ja
 from utils.graph_jaccard_similarity import graph_jaccard_similarity, bitmask_file_parser, \
-    jaccard_all_pairs_similarity_file_parser, jaccard_top_k_similar_hashtags
+    jaccard_all_pairs_similarity_file_parser, jaccard_top_k_similar_hashtags, medrank_algorithm
 from utils.vector_utils import difference
 
 # File Names
 GRAPH_FILE = "final_graph.tsv"
 TRANSLATION_FILE = "ID_translation.tsv"
-DATA = "data"
+DATA = "data1"
 GRAPH_DIR = "graph"
 
 # Edges attributes
@@ -22,7 +22,7 @@ MAIN = "main"
 
 # Hashtags variables
 hashtags_bitmask = None
-hashtags = ["#A"]#= None
+hashtags = None
 hashtags_all_pairs_similarity = None
 
 # Translations map
@@ -35,7 +35,7 @@ COST = "cost"
 
 # Others
 # Factor used to weight the jaccard similarity of hashtags
-BALANCE_FACTOR = 0.5
+BALANCE_FACTOR = 0.1
 # Max possible weight
 MAX_WEIGHT = 100000
 # Penalization
@@ -57,7 +57,9 @@ def setup():
 # Set to 0.0 attributes with None values
 def set_up_edges_empty_attributes(graph):
     for e in graph.es:
+        # print e
         for h in hashtags:
+            # print h
             if e[h] is None:
                 e[h] = 0.0
 
@@ -115,7 +117,11 @@ def load_graph(graph_in, translation_out=TRANSLATION_FILE, verbose=False):
 
 # Get node id from screen_name
 def translate(screen_name):
-    return translations_map[screen_name]
+    screen_name = screen_name.strip("\n")
+    try:
+        return translations_map[screen_name]
+    except:
+        print "name not found"
 
 
 # Computes the homogeneity of the group of hashtags
@@ -251,9 +257,13 @@ def estimate_expected_outcome(g, source, hashtags, runs, expected_outcome, verbo
 
 # Retrieve the most suitable hashtags, given as input  the set of hashtags currently adopted
 def get_close_hahstags(hashtags_in, k=5):
-    ranking = jaccard_top_k_similar_hashtags(hashtags_all_pairs_similarity, hashtags_in, k)
-    result = [tup[1] for tup in ranking]
-    return result
+    # print "hashtags_in", hashtags_in
+    ranking = medrank_algorithm(hashtags_all_pairs_similarity, hashtags_in, k)
+
+    #result = [tup[1] for tup in ranking]
+    #return result
+
+    return ranking
 
 
 # Maximize the expected outcome of an independent cascade run
@@ -271,7 +281,9 @@ def maximize_expected_outcome(g, source, current_hashtags, runs, current_outcome
     if verbose:
         print  "[maximize_expected_outcome]   Starting simulations.."
 
+    print "suggested_hashtags: ",suggested_hashtags
     for h in suggested_hashtags:
+
         current_hashtags = []
         current_hashtags.extend(current_hashtags)
         current_hashtags.append(h)
@@ -557,7 +569,7 @@ def reconstruct_paths_cost(g, target, verbose=True):
 
     for v in g.vs:
         if v[ACTIVE] is False:
-            v[ACTIVE] is True
+            v[ACTIVE] = True
             v[COST] = MAX_WEIGHT
 
     if verbose:
@@ -712,7 +724,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
 
 
 # Maximize the probability of reaching target node
-def maximize_target_outcome(g, source, target, tweet_hashtags=[], k=5, verbose=True):
+def maximize_target_outcome(g, source, target, tweet_hashtags=[], k=5, verbose=False):
     outcomes = []
     if verbose:
         print "[maximize_target_outcome]   Maximizing outcome on node: ", target
@@ -795,6 +807,15 @@ def reset_graph(g, verbose=False):
     if verbose:
         print "[reset_graph]   Done."
 
+def is_hashtag(h_list):
+    # print "h_list:",h_list
+    for h in h_list:
+        # print h
+        # print hashtags
+        if h not in hashtags:
+            return False
+
+    return True
 
 if __name__ == "__main__":
     #
