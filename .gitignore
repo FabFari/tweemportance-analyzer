@@ -136,6 +136,7 @@ fabric.properties
 
 # Generated Folders
 data/
+matteosalvinimi/
 
 # Generated Files
 *.txt

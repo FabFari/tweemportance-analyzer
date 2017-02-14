@@ -6,9 +6,9 @@ from BitVector import BitVector
 
 # TODO File with all constants
 SOURCE_LABEL = "matteosalvinimi"
-NUM_TWEETS = 5
-DATA = "data"
-PEOPLE = "people"
+NUM_TWEETS = 100
+DATA = "data1"
+PEOPLE = "people1"
 FINAL_GRAPH = "graph"
 
 def tweet_parser(filename, hashtags_map=None, hashtags_bitmask=None, graph_id=None, debug=False):
@@ -16,7 +16,25 @@ def tweet_parser(filename, hashtags_map=None, hashtags_bitmask=None, graph_id=No
 
     f = open(os.path.join(DATA, PEOPLE, SOURCE_LABEL, filename), 'r')
 
-    hashtags = f.readline().strip("\n").split("\t")
+    raw_hashtags = f.readline().strip("\n").split("\t")
+    raw_hashtags.pop()
+
+    hs = set()
+
+    # Hashtag Normalization
+    ind = -1
+    for ht in raw_hashtags:
+        for char in ht:
+            if char in [",", ".", ";", '"', ")", "?", "!", ":", "'"]:
+                ind = ht.find(char)
+                if ind != -1:
+                    hs.add(ht[0:ind])
+                    break
+                # print ht[0:ind]
+        if ind == -1:
+                hs.add(ht)
+
+    hashtags = list(hs)
 
     if debug:
         print "hashtags:", hashtags
@@ -149,7 +167,7 @@ def final_graph_builder():
 
     for filename in filenames:
         graph, hashtags = tweet_parser(filename=filename, hashtags_map=hashtags_map,
-                                       hashtags_bitmask=ht_bitmasks, graph_id=index, debug=True)
+                                       hashtags_bitmask=ht_bitmasks, graph_id=index)
         graphs_map[filename] = (graph, hashtags)
         name_to_index_dict[index] = filename
         index += 1

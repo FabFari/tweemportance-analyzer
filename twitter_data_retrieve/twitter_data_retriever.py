@@ -15,18 +15,18 @@ PEOPLE_DIRECTORY = "people/"
 PEOPLE_VISITED = "people_visited.txt"
 REPLIES_SOURCE = "replies_salvini.txt"
 
-NUM_TWEETS = 100
-TIME_TO_SLEEP = 100
+NUM_TWEETS = 50
+TIME_TO_SLEEP = 960
 
-consumer_key2 = 'gPs0nRfmeRjGoe58RubIYmYPv'
-consumer_secret2 = 'JQS8MVRW9ANfZQkQp3XzUpLfX7xm0pP9CTTHnzgsFRYNptWOlY'
-access_token2 = '142039948-8BdKP6uleeAJQTtPMsSxmno2YB3sf62ZN8Ab5NrA'
-access_token_secret2 = 'o5iP8GtpTOsBiiHyKKuPpKDjdeXRwrJut7hDkFxywXWfG'
+consumer_key1 = 'gPs0nRfmeRjGoe58RubIYmYPv'
+consumer_secret1 = 'JQS8MVRW9ANfZQkQp3XzUpLfX7xm0pP9CTTHnzgsFRYNptWOlY'
+access_token1 = '142039948-8BdKP6uleeAJQTtPMsSxmno2YB3sf62ZN8Ab5NrA'
+access_token_secret1 = 'o5iP8GtpTOsBiiHyKKuPpKDjdeXRwrJut7hDkFxywXWfG'
 
-access_token1 = "815961135321059330-7i5Mh5wC2q6WNJJiJMrlqD6k3m9DRMm"
-access_token_secret1 = "9yDVE9SlD1qwHNPcew3mxTysYgU7onmEVmFvpnWsKr844"
-consumer_key1 = "kZEJIcJ5t9FNGWhMEkm8WyEV7"
-consumer_secret1 = "oIsyfHv8wbxsHcmvMXAOLkv4HzuoR09ii1fANUHXMnO8JEVfmn"
+access_token2 = "815961135321059330-7i5Mh5wC2q6WNJJiJMrlqD6k3m9DRMm"
+access_token_secret2 = "9yDVE9SlD1qwHNPcew3mxTysYgU7onmEVmFvpnWsKr844"
+consumer_key2 = "kZEJIcJ5t9FNGWhMEkm8WyEV7"
+consumer_secret2 = "oIsyfHv8wbxsHcmvMXAOLkv4HzuoR09ii1fANUHXMnO8JEVfmn"
 
 
 access_token = '2341848095-rFwC9RZJceJGUvAsTEUivc8Hq6mdaHBGoFlNo44'
@@ -52,6 +52,7 @@ def setup(at, ats, ck, cs):
         visited.close()
     # Construct the API instance
     api = tweepy.API(auth)
+
     return api
 
 
@@ -210,7 +211,7 @@ def get_people(name=SOURCE):
                         f_person.write(line)
 
 
-def get_graph_data(verbose=True):
+def get_graph_data(api, verbose=True):
     visited_all_nodes = False
     # set delle persone visitate
     people_visited = set()
@@ -246,6 +247,7 @@ def get_graph_data(verbose=True):
 
         # dobbiamo andare per livelli altrimenti perdiamo archi
         while len(people) != 0:
+            print "----------------------------------------------------"
 
             name = people.pop()
 
@@ -256,7 +258,7 @@ def get_graph_data(verbose=True):
             if name == SOURCE:
                 ret = get_replies(screen_name=name)
             else:
-                ret = get_replies(screen_name=name, max_replies=100)
+                ret = get_replies(screen_name=name, max_replies=500)
             print "ret: ", ret
 
             if ret != -1 or name == SOURCE:
@@ -277,26 +279,29 @@ def get_graph_data(verbose=True):
 
                 if try_keys == 0:
                     print "provo con (access_token1, access_token_secret1, consumer_key1, consumer_secret1)"
-                    setup(access_token1, access_token_secret1, consumer_key1, consumer_secret1)
+                    del api
+                    api = setup(access_token1, access_token_secret1, consumer_key1, consumer_secret1)
                     try_keys = 1
 
                 elif try_keys == 1:
                     print "provo con (access_token2, access_token_secret2, consumer_key2, consumer_secret2)"
-                    setup(access_token2, access_token_secret2, consumer_key2, consumer_secret2)
+                    del api
+                    api = setup(access_token2, access_token_secret2, consumer_key2, consumer_secret2)
                     try_keys = 2
 
                 elif try_keys == 2:# riprovo a fare il giro
                     print "provo con (access_token, access_token_secret, consumer_key, consumer_secret)"
-                    setup(access_token, access_token_secret, consumer_key, consumer_secret)
+                    del api
+                    api = setup(access_token, access_token_secret, consumer_key, consumer_secret)
                     try_keys = 3
 
                 elif try_keys == 3:
                     print "provo con (access_token, access_token_secret, consumer_key, consumer_secret)"
-                    setup(access_token, access_token_secret, consumer_key, consumer_secret)
+                    del api
+                    api = setup(access_token, access_token_secret, consumer_key, consumer_secret)
                     try_keys = 0
                     if verbose:
                         print "We will try again in {} seconds, Everything comes to him who waits..{}".format(TIME_TO_SLEEP/2, strftime("%Y-%m-%d %H:%M:%S", gmtime()))
-                        print TIME_TO_SLEEP/2
 
                     # se tutte e due le chiavi non vanno allora e necessario aspettare, Twitter mi ha cacciato, aspettiamo e rifacciamo
                     time.sleep(TIME_TO_SLEEP/2)
@@ -318,7 +323,9 @@ def get_dir_people(verbose=True):
 
 
 if __name__ == "__main__":
-    api = setup(access_token, access_token_secret, consumer_key, consumer_secret)
+    # api = setup(access_token, access_token_secret, consumer_key, consumer_secret)
+    api = setup(access_token1, access_token_secret1, consumer_key1, consumer_secret1)
+    # api = setup(access_token2, access_token_secret2, consumer_key2, consumer_secret2)
     # get_source_tweets(api)
     # generate_tweets_file()
-    get_graph_data()
+    get_graph_data(api)

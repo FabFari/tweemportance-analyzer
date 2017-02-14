@@ -49,79 +49,78 @@ def max_expected_value(g, tweet):
     return "maximize_probility_reach_node"
 
 def maximize_probility_reach_node(person, tweet=None):
-    # maximize_target_outcome(g, source, target, tweet_hashtags, outcomes, k=1)
+    # maximize_target_outcome(g, source, target, tweet_hashtags, k=5)
     # g = grafo creato nel setup
     # source = numero, usare metodo per fare il mapping
     # target = numero, usare metodo per fare il mapping
     # tweet_hashtags = hashtag presenti nel tweet inserito dall'utente
-    # outcomes = TODO
     if tweet!=None:
         tweet = tweet.replace("#", " #")
         hashtags = set([i[1:] for i in tweet.split() if i.startswith("#")])
 
-    maximize_target_outcome(g, translate(SOURCE), translate(person), hashtags, outcomes, k=1)
+    maximize_target_outcome(g, translate(SOURCE), translate(person), hashtags)
 
 if __name__ == "__main__":
 
     g = setup()
 
     s = ""
-    while "esc" not in s:
-        print "premi"
+    while "5" not in s:
+        print "type"
 
-        print "1-[SIMULAZIONE] Cosa POTREBBE SUCCEDERE dato un certo tweet coi relativi hashtags"
-        print "2-[VALORE ATTESO] Avere il valore atteso dato un certo tweet coi relativi hashtags"
-        print "3-[MASSIMIZZARE IL VALORE ATTESO] (consiglia gli hashtag da usare per massimizzare il risultato(cioe la visibilita della SOURCE)"
-        print "4-[MASSIMIZZARE LA PROBABILITA' DI RAGGIUNGERE UN CERTO NODO]dato un certo tweet coi relativi hashtags" \
-              " e la peronsa da raggiungere, o solo la persona."
+        print "1-[SIMULATION]"
+        print "2-[EXPECTED VALUE]"
+        print "3-[MAXIMIZE THE EXPECTED VALUE]"
+        print "4-[MAXIMIZE THE PROBABILITY TO REACH A NODE]"
+        print "5- [ESC]"
         s = sys.stdin.readline()
 
         if "1" in s or "2" in s or "3" in s:
-            print "inserisci un tweet coi relativi hashtag"
+            print "Insert a tweet with hashtag"
             tweet = sys.stdin.readline()
             # print "tweet: ", tweet
 
         if "1" in s:
             # [SIMULAZIONE]
-            print "[SIMULAZIONE]"
+            print "[SIMULATION]"
 
             print simulation(g, tweet)
         elif "2" in s:
             # [VALORE ATTESO]
-            print "[VALORE ATTESO]"
+            print "[EXPECTED VALUE]"
             print expected_value(g, tweet)
 
         elif "3" in s:
             # [MASSIMIZZARE IL VALORE ATTESO]
-            print "[MASSIMIZZARE IL VALORE ATTESO]"
+            print "[MAXIMIZE THE EXPECTED VALUE]"
             print max_expected_value(g, tweet)
 
         elif "4" in s:
             # [MASSIMIZZARE LA PROBABILITA' DI RAGGIUNGERE UN CERTO NODO]
-            print "[MASSIMIZZARE LA PROBABILITA' DI RAGGIUNGERE UN CERTO NODO]"
+            print "[MAXIMIZE THE PROBABILITY TO REACH A NODE]"
 
-            print "premi"
-            print "     a- inserisci solo la persona"
-            print "     b- inserisci solo la persona, il tweet e gli hashtag da inserire"
+            print "type"
+            print "     a- Insert only a target(person)"
+            print "     b- Insert target(person)and aa tweet with hashtag"
             choose = sys.stdin.readline()
 
             if "a" in choose:
-                print "inserisci la persona: "
+                print "Insert the target(person): "
                 person = sys.stdin.readline()
                 print maximize_probility_reach_node(person)
             elif "b" in choose:
-                print "inserisci la persona: "
+                print "Insert the target(person): "
                 person = sys.stdin.readline()
-                print "inserisci il tweet con gli hashtag: "
+                print "Insert a tweet with hashtag"
                 tweet = sys.stdin.readline()
                 print maximize_probility_reach_node(person, tweet)
 
 
             else:
-                print "digita solo 'a' o 'b'"
+                print "type only 'a' o 'b'"
 
         else:
-            print "digita solo 1,2,3 o 4"
+            print "type only 1,2,3 o 4"
 
 
         print "--------------------------------------------------"
