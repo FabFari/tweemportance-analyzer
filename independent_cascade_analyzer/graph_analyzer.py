@@ -38,6 +38,8 @@ COST = "cost"
 BALANCE_FACTOR = 0.5
 # Max possible weight
 MAX_WEIGHT = 100000
+# Penalization
+PENALIZATION = MAX_WEIGHT/4
 
 
 # Setup method to prepare the data, there is no need to call the methods individually
@@ -517,6 +519,7 @@ def compute_shortest_paths(g, target, weights=WEIGHT, mode=IN, verbose=True):
 
 # Reconstruct cost of shortest paths to target
 def reconstruct_paths_cost(g, target, verbose=True):
+    deactivate(g, verbose=verbose)
     if verbose:
         print "[reconstruct_paths_cost]   Reconstructing paths costs.."
 
@@ -534,6 +537,8 @@ def reconstruct_paths_cost(g, target, verbose=True):
                     print "[reconstruct_paths_cost]   Edge: ", g.es[e].source, " ", g.es[e].target, \
                         " is in some shortest path with cost", g.es[e][WEIGHT]
                 g.vs[v][COST] = g.es[e][WEIGHT] + g.vs[u][COST]
+                if verbose:
+                    print "[reconstruct_paths_cost]   Node:", v, " has cost: ", g.vs[v][COST]
                 break
 
         edges = g.incident(v, mode=IN)
@@ -614,8 +619,6 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
 
     reconstruct_paths_cost(g, target, verbose=verbose)
 
-    deactivate(g, verbose=False)
-
     # Cost of the optimal path
     OPT = g.vs[source][COST]
 
@@ -643,6 +646,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
     k = min(k,candidates_found)
 
     if verbose:
+        print "[get_k_shortest_paths]   Candidates found: ", candidates_found
         print "[get_k_shortest_paths]   Done."
         print "[get_k_shortest_paths]   Computing paths.."
 
@@ -678,7 +682,7 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
         for t in p:
             cost += t[0]
 
-        if is_straight_path(g, source, target, p):
+        if is_straight_path(g, source, target, p, verbose=verbose):
             if verbose:
                 print "[get_k_shortest_paths]   Path is valid: ", p
             tup = (cost + OPT, p)
@@ -692,6 +696,8 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
         for p in paths:
             print "[get_k_shortest_paths]   Path: ", p
 
+    k = min(k, len(paths))
+
     total = 0
     for i in range(0, k):
         tup = heapq.heappop(paths)
@@ -700,14 +706,14 @@ def get_k_shortest_paths(g, source, target, result, k=5, verbose=True):
 
     heapq.heapify(result)
 
-    add_edges(g, target, removed)
+    add_edges(g, target, removed, verbose=verbose)
 
     return total
 
 
 # TOTEST
 # Maximize the probability of reaching target node
-def maximize_target_outcome(g, source, target, tweet_hashtags, k=5, verbose=True):
+def maximize_target_outcome(g, source, target, tweet_hashtags=[], k=5, verbose=True):
     outcomes = []
     if verbose:
         print "[maximize_target_outcome]   Maximizing outcome on node: ", target
@@ -726,15 +732,20 @@ def maximize_target_outcome(g, source, target, tweet_hashtags, k=5, verbose=True
         cur_hashtags.extend(tweet_hashtags)
         cur_hashtags.append(h)
 
-        homogeneity = homogeneity(cur_hashtags, verbose=verbose)
+        hmg = homogeneity(cur_hashtags, verbose=verbose)
 
-        weight_edges(g, h, homogeneity, verbose=verbose)
+        weight_edges(g, h, hmg, verbose=verbose)
         outcome = []
         tot = get_k_shortest_paths(g, source, target, outcome, k, verbose=verbose)
-        outcomes.append(tot, outcome)
+        missing_paths = k - len(outcome)
+        # If the number of path retrieved is less than k, the hashtag gets a penalization for each missing path
+        for i in range(0,missing_paths):
+            tot+=PENALIZATION
+        tup = (tot,h, outcome)
+        outcomes.append(tup)
         if verbose:
             print "[maximize_target_outcome]   Outcome: ", (tot,outcome)
-    heapq.heapify(outcomes)
+    outcomes.sort()
     if verbose:
         print "[maximize_target_outcome]   Done."
     return outcomes
