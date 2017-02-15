@@ -59,7 +59,18 @@ Basic usage
 ------
 	- Run ui_basic.py and follow the UI
 
-
+Screenshot
+------
+.. image:: https://github.com/FabFari/tweemportance-analyzer/tree/master/screenshot/1.png
+   :align: center
+.. image:: https://github.com/FabFari/tweemportance-analyzer/tree/master/screenshot/2.png
+   :align: center
+.. image:: https://github.com/FabFari/tweemportance-analyzer/tree/master/screenshot/3.png
+   :align: center
+.. image:: https://github.com/FabFari/tweemportance-analyzer/tree/master/screenshot/4_p.png
+   :align: center
+.. image:: https://github.com/FabFari/tweemportance-analyzer/tree/master/screenshot/4_pt.png
+   :align: center
 Info & Contacts
 ===============
 
