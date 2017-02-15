@@ -22,12 +22,15 @@ The process terminates when no further nodes became activated from inactive stat
 Main functionalities
 ====================
 
-The main functionalities offered by the program are:
+The aim of this software is to suggest a more efficient use of hashtags on Twitter, given the previous history of the subject and his audience. That is, it provides a mean to maximize the probability of reaching a wider audience and/or reaching some desired person.
 
-- SIMULATION: 
-- EXPECTED VALUE: 
-- MAXIMIZE THE EXPECTED VALUE: 
-- MAXIMIZE THE PROBABILITY TO REACH A NODE: 
+The four main functionalities of the program are the following:
+	- SIMULATION: Given a potential tweet of the source, the software simulates a possible outcome of the tweet, that is, given the hashtags of a tweet, the software executes a run of the independent cascade model and returns the outcome.
+	- EXPECTED VALUE: Given a potential tweet of the source, the software estimates the expected outcome of the tweet. More specifically tweet-analyzer computes the expected number of nodes in the graph reached  by the tweet, and for each node, returns the probability of that node being involved in the discussion.
+	- MAXIMIZE EXPECTED VALUE: Given a potential tweet of the source, the software obtains through ranking aggregation the potentially most suitable hashtags the source could include in the tweet. For each  of those candidates, it estimates the outcome of the tweet if the candidate would be included. Finally the program returns the hashtags that provides, in expectation, a better outcome.
+	- MAXIMIZE PROBABILITY TO REACH TARGET NODE: Given a potential tweet of the source, and a target node the source is trying to reach, the software finds both the hashtags the target is most interested into, and the hashtags that could be included in the tweet. Aggregating and ranking the results, it then computes, through diverse routing, which solutions provide the highest probability of reaching the target node.
+
+
 
 Data retrive and manipulation phases
 ============
@@ -50,9 +53,6 @@ To build a final graph we have to label the edges with the probability of that e
 
 
 
-
-Here you can find a demo of the application:
-https://www.youtube.com/watch?v=LHL-k30ffdg
 
 
 Info & Contacts
