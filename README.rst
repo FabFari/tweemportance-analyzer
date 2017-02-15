@@ -48,7 +48,16 @@ Once the tweets-graph files are been written, we have to extract the information
 
 To build the **final graph** we take the union of all the tweet-graphs, base on the history these graphs provide we can estimate for each hashtag and for each edge the probability of the tweet traversing that link. 
 
+How to create the graph
+------
+	- Choose a SOURCE
+	- Run twitter_data_retrive.py and wait
+	- Run build_tweet_graph.py
+	- Run graph_builder.py
 
+Basic usage
+------
+	- Run ui_basic.py and follow the UI
 
 
 Info & Contacts
