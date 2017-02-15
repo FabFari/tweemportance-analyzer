@@ -8,6 +8,7 @@
 Tweemportance-analyzer
 =======
 
+The aim of this software is to suggest a more efficient use of hashtags on Twitter, given the previous history of the subject and his audience. That is, it provides a mean to maximize the probability of reaching a wider audience and/or reaching some desired person.
 
 Tweemportance-analyzer uses **Independent Cascade Model (ICM)** to analyze interelation between replies and hashtag used focusing on one specific person (the SOURCE of information) and building a model to suggest the source which hashtag to use in order to achive its visibility goals.
 
@@ -20,16 +21,12 @@ The process runs in discrete steps. At the beginning of ICM process, few nodes a
 The process terminates when no further nodes became activated from inactive state.
 
 Main functionalities
-====================
-
-The aim of this software is to suggest a more efficient use of hashtags on Twitter, given the previous history of the subject and his audience. That is, it provides a mean to maximize the probability of reaching a wider audience and/or reaching some desired person.
-
+===================
 The four main functionalities of the program are the following:
 	- SIMULATION: Given a potential tweet of the source, the software simulates a possible outcome of the tweet, that is, given the hashtags of a tweet, the software executes a run of the independent cascade model and returns the outcome.
 	- EXPECTED VALUE: Given a potential tweet of the source, the software estimates the expected outcome of the tweet. More specifically tweet-analyzer computes the expected number of nodes in the graph reached  by the tweet, and for each node, returns the probability of that node being involved in the discussion.
 	- MAXIMIZE EXPECTED VALUE: Given a potential tweet of the source, the software obtains through ranking aggregation the potentially most suitable hashtags the source could include in the tweet. For each  of those candidates, it estimates the outcome of the tweet if the candidate would be included. Finally the program returns the hashtags that provides, in expectation, a better outcome.
 	- MAXIMIZE PROBABILITY TO REACH TARGET NODE: Given a potential tweet of the source, and a target node the source is trying to reach, the software finds both the hashtags the target is most interested into, and the hashtags that could be included in the tweet. Aggregating and ranking the results, it then computes, through diverse routing, which solutions provide the highest probability of reaching the target node.
-
 
 
 Data retrive and manipulation phases
@@ -47,10 +44,9 @@ Graph building process
 -----------
 After the Data retrival step, we have to build a graph of replies for each tweet. We use graph_from_data() function to do that. 
 
-Once the tweets-graph files are been written, we have to extract the informations related to the hashtags and create the union graph (from each tweet graph) because we have to make a model to perform the probability studies. For each collected hashtags we identify all the tweets graphs mentioning that hashtags in order to create a set of bitmasks (one for each hashtags) used to compare the similarity (Jaccard) of the hashtags in an efficient way. This will be needed in the following steps in order to suggest the best hashtag to use a specific situation (eg. suggest a second hashtag to use with one give in input).
+Once the tweets-graph files are been written, we have to extract the informations related to the hashtags and create the union graph (from each tweet graph) as we have to make a model to perform the probability studies. For each collected hashtag we identify all the tweet-graphs mentioning that hashtag in order to create a set of bitmasks (one for each hashtags) used to compare the similarity (Jaccard) of the hashtags in an efficient way. This will be needed in the following steps in order to suggest the best hashtags to use in a specific situation (eg. suggest a second hashtag to use with one give in input).
 
-To build a final graph we have to label the edges with the probability of that edges 
-
+To build the **final graph** we take the union of all the tweet-graphs, base on the history these graphs provide we can estimate for each hashtag and for each edge the probability of the tweet traversing that link. 
 
 
 
