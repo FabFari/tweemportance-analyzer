@@ -31,8 +31,25 @@ The main functionalities offered by the program are:
 
 Data retrive and manipulation phases
 ============
-The model uses Twitter data. In order for the model to work, we need to collect a set of tweets from the SOURCE. We use a Twitter API through tweepy(`<http://docs.tweepy.org/en/v3.5.0/>`_). 
-----
+Collecting data from Twitter
+----------
+The model uses Twitter data. We use a Twitter API through tweepy(`<http://docs.tweepy.org/en/v3.5.0/>`_). 
+In order for the model to work, we need to collect a set of tweets from the SOURCE. Once we have collected the tweets from the SOURCE we have to collect the set of replies that originated from each SOURCE's tweets. 
+
+The are two main method for achiving this: get_people() and get_replies(). Since the Twitter API doesn't allow to retrive all the replies starting from the only tweet, we have to get all replies to the source, get all the replies related to the tweets that we want to analyze and save the people involved.
+
+Those method are called for each person collected during the exploration phase, starting from the SOURCE in "recursive-like" way, performing get_replies() for each person and then get_people() to discover new nodes.
+
+Graph building process
+-----------
+After the Data retrival step, we have to build a graph of replies for each tweet. We use graph_from_data() function to do that. 
+
+Once the tweets-graph files are been written, we have to extract the informations related to the hashtags and create the union graph (from each tweet graph) because we have to make a model to perform the probability studies. For each collected hashtags we identify all the tweets graphs mentioning that hashtags in order to create a set of bitmasks (one for each hashtags) used to compare the similarity (Jaccard) of the hashtags in an efficient way. This will be needed in the following steps in order to suggest the best hashtag to use a specific situation (eg. suggest a second hashtag to use with one give in input).
+
+To build a final graph we have to label the edges with the probability of that edges 
+
+
+
 
 Here you can find a demo of the application:
 https://www.youtube.com/watch?v=LHL-k30ffdg
@@ -47,13 +64,7 @@ Info & Contacts
 - `Fabrizio Farinacci <https://it.linkedin.com/in/fabrizio-farinacci-496679116/>`_
 - `Tommaso D'Orsi tommasodorsi@gmail.com`_
 
-The project was developed and has been presented within the course of "Pervasive Systems", 
-held by Prof. Ioannis Chatzigiannakis within the Master of Science in Computer Science (MSE-CS),
+The project was developed and has been presented within the course of "Data Mining", 
+held by Prof. Aris Anagnostopoulos, Sapienza University of Rome. Ioannis Chatzigiannakis, Sapienza University of Rome. Aristides Gionis, Aalto University within the Master of Science in Computer Science (MSE-CS),
 at University of Rome "La Sapienza". Informations about the course are available in the following page:
-http://ichatz.me/index.php/Site/PervasiveSystems2016.
-
-Additional informations about the project can be found in the following Slideshare presentations:
-
-- http://www.slideshare.net/FabrizioFarinacci1/recipex-your-personal-caregiver-and-lifestyle-makeover
-- http://www.slideshare.net/FabrizioFarinacci1/recipex-your-personal-caregiver-and-lifestyle-makeover-62091050
-
+http://www.aris.me/index.php/data-mining-2016.
