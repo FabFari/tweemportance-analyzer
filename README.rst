@@ -3,7 +3,7 @@
 	**University of Rome "La Sapienza"**
 	*Master of Science in Engineering in Computer Science*
 	*Data Mining, a.y. 2016-17*
-	Data Mining Group Project by Andrea Bissoli and Tommaso D'Orsi and Fabrizio Farinacci
+	Data Mining Group Project by Andrea Bissoli, Tommaso D'Orsi and Fabrizio Farinacci
 
 Tweemportance-analyzer
 =======
