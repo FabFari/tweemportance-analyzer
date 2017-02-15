@@ -46,7 +46,11 @@ After the Data retrival step, we have to build a graph of replies for each tweet
 
 Once the tweets-graph files are been written, we have to extract the informations related to the hashtags and create the union graph (from each tweet graph) as we have to make a model to perform the probability studies. For each collected hashtag we identify all the tweet-graphs mentioning that hashtag in order to create a set of bitmasks (one for each hashtags) used to compare the similarity (Jaccard) of the hashtags in an efficient way. This will be needed in the following steps in order to suggest the best hashtags to use in a specific situation (eg. suggest a second hashtag to use with one give in input).
 
-To build the **final graph** we take the union of all the tweet-graphs, base on the history these graphs provide we can estimate for each hashtag and for each edge the probability of the tweet traversing that link. 
+To build the **final graph** we take the union of all the tweet-graphs, base on the history these graphs provide we can estimate for each hashtag and for each edge the probability (for each hashtag, probability is equal to number of edges occurencies **divided** hashtag tweet-graph cardinality) of the tweet traversing that link. 
+
+In this step we also need to do some preprocessing of the hashtahs-graphs calculation. More specifically are required for the on-line steps the similiraties (Jaccard) between each pair of hashtags are computed and arranged into a sorted list (one for each hashtag) from the most similar to the least. This will be feed to the ranking aggregadion mechanism (meadian ranking aggregation techinque) used in the hashtag suggestion functionality.
+
+
 
 How to create the graph
 ------
