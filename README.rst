@@ -62,24 +62,30 @@ Basic usage
 Screenshot
 ------
 SIMULATION
+
 .. image:: https://github.com/FabFari/tweemportance-analyzer/blob/master/screenshot/1.png
    :align: center
    
 EXPECTED VALUE
+
 .. image:: https://github.com/FabFari/tweemportance-analyzer/blob/master/screenshot/2.png
    :align: center
    
 MAXIMIZE EXPECTED VALUE
+
 .. image:: https://github.com/FabFari/tweemportance-analyzer/blob/master/screenshot/3.png
    :align: center
    
 MAXIMIZE PROBABILITY TO REACH TARGET NODE(person)
+
 .. image:: https://github.com/FabFari/tweemportance-analyzer/blob/master/screenshot/4_p.png
    :align: center
    
 MAXIMIZE PROBABILITY TO REACH TARGET NODE(person, tweet)
+
 .. image:: https://github.com/FabFari/tweemportance-analyzer/blob/master/screenshot/4_pt.png
    :align: center
+   
 Info & Contacts
 ===============
 
