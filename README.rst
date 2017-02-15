@@ -62,7 +62,7 @@ Info & Contacts
 
 - `Andrea Bissoli <https://www.linkedin.com/in/andrea-bissoli-537768116/>`_
 - `Fabrizio Farinacci <https://it.linkedin.com/in/fabrizio-farinacci-496679116/>`_
-- `Tommaso D'Orsi tommasodorsi@gmail.com`_
+- Tommaso D'Orsi (tommasodorsi@gmail.com)
 
 The project was developed and has been presented within the course of "Data Mining", 
 held by Prof. Aris Anagnostopoulos, Sapienza University of Rome. Ioannis Chatzigiannakis, Sapienza University of Rome. Aristides Gionis, Aalto University within the Master of Science in Computer Science (MSE-CS),
