@@ -9,9 +9,9 @@ from time import gmtime, strftime
 SOURCE = "matteosalvinimi" ## "BissoliAn"# "VittorioSgarbi"#
 FILE_TWEETS = "tweets.txt"
 FILE_REPLIES = "replies.txt"
-DATA_DIRECTORY = "data/"
+DATA_DIRECTORY = "data1/"
 TWEETS_DIRECTORY = "tweets/"
-PEOPLE_DIRECTORY = "people/"
+PEOPLE_DIRECTORY = "people1/"
 PEOPLE_VISITED = "people_visited.txt"
 REPLIES_SOURCE = "replies_salvini.txt"
 
